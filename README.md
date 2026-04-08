@@ -179,3 +179,18 @@ This environment models real financial spreadsheet work:
 
 Each task uses a genuine enterprise Excel workbook.  MODIFY tasks are graded
 by cell-level comparison against a reference workbook.
+
+## Acknowledgments
+
+The spreadsheet tasks and reference workbooks used in this environment are
+sourced from the **FinWorkBench (Finch)** dataset. If you use this environment
+in your research, please cite:
+
+```bibtex
+@article{dong2025finch,
+  title={Finch: Benchmarking Finance \& Accounting across Spreadsheet-Centric Enterprise Workflows},
+  author={Dong, Haoyu and Zhang, Pengkun and Gao, Yan and Dong, Xuanyu and Cheng, Yilin and Lu, Mingzhe and Yakefu, Adina and Zheng, Shuxin},
+  journal={arXiv preprint arXiv:2512.13168},
+  year={2025}
+}
+```
