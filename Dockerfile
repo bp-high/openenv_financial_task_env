@@ -24,6 +24,7 @@ RUN uv pip install --system --no-cache-dir \
 COPY . /app/env/
 
 ENV PYTHONPATH="/app/env:$PYTHONPATH"
+ENV ENABLE_WEB_INTERFACE=true
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
