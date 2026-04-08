@@ -130,10 +130,10 @@ class FinancialEnvironment(Environment):
         self._state.step_count += 1
 
         if self._current_task is None:
-            return self._obs(feedback="No task loaded. Call reset() first.", reward=0.0, done=True)
+            return self._obs(feedback="No task loaded. Call reset() first.", reward=0.001, done=True)
 
         if self._done:
-            return self._obs(feedback="Episode already finished. Call reset().", reward=0.0, done=True)
+            return self._obs(feedback="Episode already finished. Call reset().", reward=0.001, done=True)
 
         action_type = action.action_type.strip().lower()
 
@@ -146,7 +146,7 @@ class FinancialEnvironment(Environment):
         else:
             return self._obs(
                 feedback=f"Unknown action_type '{action.action_type}'. Use 'code', 'submit', or 'submit_file'.",
-                reward=0.0, done=False,
+                reward=0.001, done=False,
             )
 
     # ------------------------------------------------------------------
@@ -159,14 +159,49 @@ class FinancialEnvironment(Environment):
     # ------------------------------------------------------------------
     # Code execution
     # ------------------------------------------------------------------
+    def _compute_code_reward(self, code: str, succeeded: bool, stdout: str) -> float:
+        """Compute a step reward for code execution based on quality signals."""
+        if not succeeded:
+            return 0.005  # Failed code gets minimal reward
+
+        # Count substantive lines (not imports, blanks, comments)
+        lines = code.strip().splitlines()
+        substantive = 0
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("#"):
+                continue
+            if stripped.startswith("import ") or stripped.startswith("from "):
+                continue
+            substantive += 1
+
+        # Base reward for successful execution
+        reward = 0.02
+
+        # Bonus for substantive code (up to +0.03)
+        reward += min(substantive * 0.002, 0.03)
+
+        # Bonus for producing output (agent is exploring data)
+        if stdout.strip():
+            output_lines = len(stdout.strip().splitlines())
+            reward += min(output_lines * 0.001, 0.02)
+
+        # Bonus for modification actions (save, wb.save, etc.)
+        if "save(" in code or ".save(" in code:
+            reward += 0.03
+
+        return min(reward, 0.10)  # Cap at 0.10 per code step
+
     def _handle_code(self, code: str) -> FinancialObservation:
         """Execute Python code in a subprocess and return stdout/stderr."""
         if not self._workdir:
-            return self._obs(feedback="No working directory. Call reset() first.", reward=0.0, done=False)
+            return self._obs(feedback="No working directory. Call reset() first.", reward=0.001, done=False)
 
-        # Small reward for taking an action
-        reward = 0.02
-        self._cumulative_reward += reward
+        succeeded = False
+        stdout = ""
+        stderr = ""
 
         try:
             result = subprocess.run(
@@ -181,6 +216,7 @@ class FinancialEnvironment(Environment):
             stderr = result.stderr[:2000] if result.stderr else ""
 
             if result.returncode == 0:
+                succeeded = True
                 feedback = f"Code executed successfully.\n\nSTDOUT:\n{stdout}"
                 if stderr:
                     feedback += f"\n\nSTDERR:\n{stderr}"
@@ -192,6 +228,9 @@ class FinancialEnvironment(Environment):
             feedback = "Code execution timed out (30s limit)."
         except Exception as e:
             feedback = f"Code execution error: {e}"
+
+        reward = self._compute_code_reward(code, succeeded, stdout)
+        self._cumulative_reward += reward
 
         at_limit = self._state.step_count >= self.MAX_STEPS
         if at_limit:
@@ -231,8 +270,8 @@ class FinancialEnvironment(Environment):
         if not p.exists():
             self._done = True
             return self._obs(
-                feedback=f"File not found: {p}. Score: 0.00",
-                reward=0.0, done=True,
+                feedback=f"File not found: {p}. Score: 0.001",
+                reward=0.001, done=True,
             )
 
         score = grade_task(task, output_path=str(p))

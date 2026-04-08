@@ -161,8 +161,13 @@ def grade_xlsx(output_path: str, reference_path: str) -> float:
 # Dispatcher
 # ---------------------------------------------------------------------------
 
+def _clamp_score(score: float) -> float:
+    """Clamp score to open interval (0.001, 0.999) — evaluator rejects exact 0.0 and 1.0."""
+    return max(0.001, min(0.999, score))
+
+
 def grade_task(task: Dict[str, Any], answer: str = "", output_path: str = "") -> float:
-    """Grade a task.  Returns 0.0–1.0.
+    """Grade a task.  Returns score in (0.001, 0.999).
 
     For QA tasks:    uses *answer* (text) vs task["reference_answer"].
     For MODIFY tasks: uses *output_path* (xlsx) vs task["reference_file"].
@@ -171,13 +176,13 @@ def grade_task(task: Dict[str, Any], answer: str = "", output_path: str = "") ->
 
     if task_type == "QA":
         ref = task.get("reference_answer", "")
-        return grade_qa(answer, ref)
+        return _clamp_score(grade_qa(answer, ref))
     elif task_type == "MODIFY":
         ref_path = task.get("reference_file", "")
         if not output_path or not ref_path:
-            return 0.0
+            return 0.001
         if not Path(output_path).exists() or not Path(ref_path).exists():
-            return 0.0
-        return grade_xlsx(output_path, ref_path)
+            return 0.001
+        return _clamp_score(grade_xlsx(output_path, ref_path))
     else:
-        return 0.0
+        return 0.001

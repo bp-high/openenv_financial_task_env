@@ -91,7 +91,7 @@ def log_start(task: str, env: str, model: str) -> None:
 def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
     done_val = str(done).lower()
     error_val = str(error).lower() if error else "none"
-    short_action = action[:120].replace("\n", " ")
+    short_action = action.replace("\n", " ")
     print(
         f"[STEP] step={step} action={short_action} reward={reward:.2f} done={done_val} error={error_val}",
         flush=True,
@@ -166,9 +166,15 @@ def extract_action(response: str):
     """Parse model response into (action_type, content)."""
     if "SUBMIT_ANSWER:" in response:
         answer = response.split("SUBMIT_ANSWER:", 1)[1].strip()
+        # Strip trailing markdown artifacts
+        answer = re.sub(r'```\s*$', '', answer).strip()
         return "submit", answer
     if "SUBMIT_FILE:" in response:
         path = response.split("SUBMIT_FILE:", 1)[1].strip()
+        # Strip trailing backticks, quotes, whitespace
+        path = re.sub(r'[`\s"\']+$', '', path).strip()
+        # Also strip leading backticks/quotes
+        path = re.sub(r'^[`"\']+', '', path).strip()
         return "submit_file", path
 
     # Extract code block
@@ -247,7 +253,7 @@ async def run_task(client: OpenAI, ws_url: str, task_id: str) -> float:
 
                 log_step(
                     step=step_num,
-                    action=f"[{action_type}] {content[:80]}",
+                    action=f"[{action_type}] {content}",
                     reward=reward,
                     done=done,
                     error=None,
@@ -282,8 +288,11 @@ async def run_task(client: OpenAI, ws_url: str, task_id: str) -> float:
 
     except Exception as exc:
         print(f"[DEBUG] Task {task_id} error: {exc}", flush=True)
-        log_step(step=steps_taken + 1, action="error", reward=0.0, done=True, error=str(exc))
+        log_step(step=steps_taken + 1, action="error", reward=0.001, done=True, error=str(exc))
 
+    # Clamp final score to (0.001, 0.999) — evaluator rejects exact 0.0 and 1.0
+    final_score = max(0.001, min(0.999, final_score))
+    rewards = [max(0.001, min(0.999, r)) for r in rewards]
     log_end(success=success, steps=steps_taken, score=final_score, rewards=rewards)
     return final_score
 
