@@ -31,7 +31,7 @@ from openai import OpenAI
 # ---------------------------------------------------------------------------
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.environ.get("MODEL_NAME", "MiniMaxAI/MiniMax-M2.5")
+MODEL_NAME = os.environ.get("MODEL_NAME", "MiniMaxAI/MiniMax-M2.1")
 HF_TOKEN = os.environ.get("HF_TOKEN") or os.environ.get("API_KEY")
 ENV_URL = os.environ.get("ENV_URL", "http://localhost:8000")
 
@@ -91,7 +91,7 @@ def log_start(task: str, env: str, model: str) -> None:
 def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
     done_val = str(done).lower()
     error_val = str(error).lower() if error else "none"
-    short_action = action.replace("\n", " ")
+    short_action = action[:500].replace("\n", " ")
     print(
         f"[STEP] step={step} action={short_action} reward={reward:.2f} done={done_val} error={error_val}",
         flush=True,
@@ -204,8 +204,12 @@ def _to_ws_url(http_url: str) -> str:
     return http_url.replace("https://", "wss://").replace("http://", "ws://")
 
 
+TASK_TIMEOUT = 240  # 4 minutes per task (5 tasks × 4 min = 20 min max)
+
+
 async def run_task(client: OpenAI, ws_url: str, task_id: str) -> float:
     import websockets
+    import time
 
     log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
 
@@ -213,9 +217,17 @@ async def run_task(client: OpenAI, ws_url: str, task_id: str) -> float:
     steps_taken = 0
     final_score = 0.0
     success = False
+    task_start = time.time()
 
     try:
-        async with websockets.connect(f"{ws_url}/ws", open_timeout=30, max_size=100 * 1024 * 1024) as ws:
+        async with websockets.connect(
+            f"{ws_url}/ws",
+            open_timeout=30,
+            close_timeout=10,
+            max_size=100 * 1024 * 1024,
+            ping_interval=60,
+            ping_timeout=60,
+        ) as ws:
             # Reset
             reset_data = await ws_reset(ws, task_id)
             obs = reset_data["observation"]
@@ -235,6 +247,12 @@ async def run_task(client: OpenAI, ws_url: str, task_id: str) -> float:
             ]
 
             for step_num in range(1, MAX_STEPS + 1):
+                # Check per-task timeout
+                elapsed = time.time() - task_start
+                if elapsed > TASK_TIMEOUT:
+                    print(f"[DEBUG] Task {task_id} timeout after {elapsed:.0f}s (limit {TASK_TIMEOUT}s)", flush=True)
+                    break
+
                 response = get_model_response(client, messages)
                 if not response:
                     break

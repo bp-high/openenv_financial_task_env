@@ -87,12 +87,23 @@ the same kind of work.
 
 | Action | Reward | Signal |
 |--------|--------|--------|
-| `code` | 0.02 | Small reward for active exploration |
-| `submit` / `submit_file` | 0.0–1.0 | Graded against reference |
+| `code` (failed) | 0.005 | Penalized — syntax/runtime error |
+| `code` (simple) | ~0.02 | Minimal — just imports and a print |
+| `code` (exploration) | ~0.05 | Good — reading data, producing output |
+| `code` (modification + save) | ~0.06–0.10 | Best — actively editing the workbook |
+| `submit` / `submit_file` | 0.001–0.999 | Full grading against reference |
 | Max steps (15) | Episode ends | |
+
+Code step rewards are computed from:
+- **Execution success** — failed code gets only 0.005
+- **Substantive lines** — lines beyond imports/comments earn +0.002 each (up to +0.03)
+- **Output produced** — printing data earns +0.001 per line (up to +0.02)
+- **Save operations** — calling `.save()` earns +0.03 (agent is modifying the workbook)
 
 **QA grading:** Numeric extraction with 5% tolerance + keyword overlap.
 **MODIFY grading:** 30% sheet-name match + 70% cell-level comparison (2% numeric tolerance).
+
+All scores are clamped to the open interval (0.001, 0.999).
 
 ## Setup & Usage
 
@@ -128,11 +139,91 @@ python inference.py
 
 ## Baseline Scores
 
-| Difficulty | Type | Expected Range |
-|------------|------|---------------|
-| Easy | QA | 0.60 – 1.00 |
-| Medium | MODIFY | 0.30 – 0.80 |
-| Hard | MODIFY | 0.10 – 0.60 |
+The environment includes 10 tasks, but the baseline inference runs 5 representative
+tasks (3 easy + 1 medium + 1 hard) to stay within the 20-minute runtime constraint.
+
+**Model:** `MiniMaxAI/MiniMax-M2.5` via HuggingFace Router
+
+| Task | Difficulty | Type | Score | Step Rewards |
+|------|------------|------|-------|-------------|
+| task_1 — Count Plants | Easy | QA | 0.001 | 0.05, 0.06, 0.06, 0.06, 0.00 |
+| task_2 — Retrieve EOL Charge | Easy | QA | 0.001 | 0.04, 0.01, 0.07, 0.06, 0.02, 0.00 |
+| task_3 — Portfolio MTM Change | Easy | QA | 0.367 | 0.06, 0.01, 0.07, ..., 0.37 |
+| task_5 — Audit Formulas | Medium | MODIFY | **0.958** | 0.07, 0.01, 0.07, ..., 0.96 |
+| task_8 — Balance Sheet Validation | Hard | MODIFY | 0.001 | 0.06, 0.01, 0.06, ..., 0.05 |
+| **Average** | | | **0.266** | |
+
+**Runtime:** 12 min 10 sec (limit: 20 min) · **Server memory:** ~40 MB (limit: 8 GB)
+
+Note: Step rewards vary based on code quality — failed code gets 0.005, exploration
+~0.05, modification+save ~0.06–0.10.
+
+### Run 2 — `google/gemma-4-26B-A4B-it`
+
+| Task | Difficulty | Type | Score |
+|------|------------|------|-------|
+| task_1 — Count Plants | Easy | QA | 0.001 |
+| task_2 — Retrieve EOL Charge | Easy | QA | **0.999** |
+| task_3 — Portfolio MTM Change | Easy | QA | 0.001 |
+| task_5 — Audit Formulas | Medium | MODIFY | 0.001 |
+| task_8 — Balance Sheet Validation | Hard | MODIFY | 0.001 |
+| **Average** | | | **0.201** |
+
+**Runtime:** 19 min 27 sec (limit: 20 min) · **Server memory:** ~40 MB
+
+Gemma 4 26B solved task_2 perfectly in just 2 steps but timed out on more
+complex tasks due to longer generation times.
+
+### Run 3 — `Qwen/Qwen3.5-122B-A10B`
+
+| Task | Difficulty | Type | Score |
+|------|------------|------|-------|
+| task_1 — Count Plants | Easy | QA | 0.001 |
+| task_2 — Retrieve EOL Charge | Easy | QA | **0.999** |
+| task_3 — Portfolio MTM Change | Easy | QA | 0.001 |
+| task_5 — Audit Formulas | Medium | MODIFY | 0.001 |
+| task_8 — Balance Sheet Validation | Hard | MODIFY | 0.001 |
+| **Average** | | | **0.201** |
+
+**Runtime:** 2 min 11 sec · Fast inference but hit per-task timeout on complex tasks.
+
+### Run 4 — `deepseek-ai/DeepSeek-R1`
+
+| Task | Difficulty | Type | Score |
+|------|------------|------|-------|
+| task_1 — Count Plants | Easy | QA | 0.001 |
+| task_2 — Retrieve EOL Charge | Easy | QA | 0.001 |
+| task_3 — Portfolio MTM Change | Easy | QA | 0.001 |
+| task_5 — Audit Formulas | Medium | MODIFY | 0.001 |
+| task_8 — Balance Sheet Validation | Hard | MODIFY | 0.001 |
+| **Average** | | | **0.001** |
+
+**Runtime:** 11 min 57 sec · DeepSeek-R1's long chain-of-thought reasoning consumed
+most of the output tokens, leaving answers that didn't parse correctly.
+
+### Run 5 — `MiniMaxAI/MiniMax-M2.1` (Best)
+
+| Task | Difficulty | Type | Score | Steps |
+|------|------------|------|-------|-------|
+| task_1 — Count Plants | Easy | QA | 0.001 | 5 |
+| task_2 — Retrieve EOL Charge | Easy | QA | **0.999** | 4 |
+| task_3 — Portfolio MTM Change | Easy | QA | 0.001 | 10 |
+| task_5 — Audit Formulas | Medium | MODIFY | **0.958** | 4 |
+| task_8 — Balance Sheet Validation | Hard | MODIFY | **0.733** | 10 |
+| **Average** | | | **0.538** | |
+
+**Runtime:** 3 min 18 sec · Best overall performance — solved 3/5 tasks with high
+scores including the hard MODIFY task (0.733). Fast and efficient.
+
+### Model Comparison Summary
+
+| Model | Avg Score | Runtime | Best Task |
+|-------|-----------|---------|-----------|
+| **MiniMax-M2.1** | **0.538** | **3m 18s** | task_5: 0.958, task_8: 0.733 |
+| MiniMax-M2.5 | 0.266 | 12m 10s | task_5: 0.958 |
+| Gemma 4 26B | 0.201 | 19m 27s | task_2: 0.999 |
+| Qwen 3.5 122B | 0.201 | 2m 11s | task_2: 0.999 |
+| DeepSeek-R1 | 0.001 | 11m 57s | — |
 
 ## Project Structure
 
@@ -178,7 +269,7 @@ This environment models real financial spreadsheet work:
 - **Consolidation** — aggregate data across sheets into summary views
 
 Each task uses a genuine enterprise Excel workbook.  MODIFY tasks are graded
-by cell-level comparison against a reference workbook.
+by spreadsheet properties comparison against a reference workbook.
 
 ## Acknowledgments
 
