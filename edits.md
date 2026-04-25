@@ -867,7 +867,93 @@ a meaningful SFT warm-start before GRPO.
 
 ---
 
-## Current state (post-Phase 8)
+## Phase 9 — Hard early-submit gate at the env layer
+
+**Trigger:** during Phase-2 trajectory collection on the train split,
+Kimi-K2.5 was *still* trying to submit the unmodified source file at
+step 1 (e.g., `pptarena_case_91_add_qr_code`), even though the Phase-7
+grader correctly scored it 0.001. Post-grading defense alone wasn't
+enough — every wasted "submit at step 1" episode was lost training data
+and burned API budget.
+
+### Fix: refuse the action before grading
+
+[`server/financial_environment.py`](server/financial_environment.py) now
+tracks `_code_steps_taken` (incremented in `_handle_code` regardless of
+success — even a failed code attempt counts). Both submit handlers
+(`_handle_submit_file`, `_handle_submit_text`) check
+`_code_steps_taken >= _min_code_steps_before_submit` (default 1) and
+return early with explanatory feedback if not.
+
+Crucially, **the rejection does NOT end the episode**:
+
+- The agent gets back a feedback message: `❌ Submit rejected: you must
+  execute at least 1 code step before submitting...`
+- The reward for the rejected step is `0.001`
+- `done=False` — the agent has its remaining steps (15 - n_used) to recover
+
+This shape is exactly right for an RL agent: ending the episode would
+make a single bad attempt catastrophic; keeping it open turns it into
+a corrective signal.
+
+The minimum is overridable via `FINANCIAL_ENV_MIN_CODE_STEPS` env var.
+Set to `0` to disable the gate (useful only for debugging).
+
+### Belt-and-suspenders: prompt also tells the model
+
+[`inference.py`](inference.py)'s `_BASE_RULES` now includes:
+
+> 6. **You MUST execute at least one code step before submitting.** The
+>    environment will reject SUBMIT_ANSWER and SUBMIT_FILE on step 1 — you
+>    need to read or modify the file with code first. Submitting the source
+>    file unchanged is never a correct solve and will be rejected.
+
+Defense in depth: the prompt prevents wasted retries on models that
+follow instructions; the env layer enforces the rule on models that
+don't.
+
+### Smoke test results
+
+```
+Reset:          code_steps_taken = 0, min_required = 1
+
+Step 1: submit_file (early)       → reward=0.001, done=False  ✓ rejected
+Step 2: code (any code)           → counter increments to 1    ✓
+Step 3: submit_file (after code)  → reward=normal, done=True   ✓ allowed
+Step 1: submit (QA, early)        → reward=0.001, done=False   ✓ same gate
+Disabled (env var=0)              → submit goes through        ✓
+```
+
+### Stack of defenses against the "submit unchanged" exploit class
+
+This is now the third independent defense, all targeting the same
+exploit class:
+
+| Layer | Phase | What it does |
+|---|---|---|
+| **Env action gate** | **9** (this one) | **Refuse the submit action itself if no code step has been taken** |
+| Grader byte-equality | 7 | If submit happens AND output is byte-identical to source → 0.001 |
+| SFT corpus filter | 8 | Drop trajectories with `n_steps==1` and `submit_file` even at high score |
+
+Layer 9 prevents the trajectory from existing in the first place.
+Layer 7 catches it if Layer 9 is somehow bypassed (e.g.,
+`FINANCIAL_ENV_MIN_CODE_STEPS=0`).
+Layer 8 prevents future grader gaps from leaking into SFT training data.
+
+### Modified files
+
+- [`server/financial_environment.py`](server/financial_environment.py) —
+  added `_code_steps_taken`, `_min_code_steps_before_submit`,
+  `_early_submit_rejected()`. Both submit handlers gated.
+- [`inference.py`](inference.py) — added rule #6 to `_BASE_RULES`.
+
+### Files unchanged in Phase 9
+
+- graders, manifest, data, deps
+
+---
+
+## Current state (post-Phase 9)
 
 ### Repo layout
 
@@ -931,6 +1017,7 @@ openenv_financial_task_env/
 | Generic-distance gaming | ✅ `eval_check` rewards spec-aligned progress |
 | **Submit-source-unchanged** (Phase 7) | ✅ Byte-equality check at grade time → 0.001 |
 | **1-step-submit-file in SFT corpus** (Phase 8) | ✅ Builder drops these even at high score |
+| **Early submit before any code step** (Phase 9) | ✅ Env refuses the action itself; episode stays open for recovery |
 | `lib_engagement` regex gaming | 🟡 Trivial cap (0.010); AST-based check would harden (TODO) |
 | `mutation` spam | 🟡 Capped per-step but could spam-save garbage; could couple to progress (TODO) |
 

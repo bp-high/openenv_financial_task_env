@@ -60,6 +60,14 @@ class FinancialEnvironment(Environment):
         # Progress signal (distance-to-gold) is on by default; set
         # FINANCIAL_ENV_PROGRESS=0 to disable for clean eval.
         self._progress_enabled = os.environ.get("FINANCIAL_ENV_PROGRESS", "1") == "1"
+        # Minimum number of code steps before a submit is accepted.  Default 1
+        # — kills the "submit at step 1 with source unchanged" exploit at the
+        # env layer (post-grading defense alone wasn't enough — Kimi still
+        # tried it even when the grader scored 0.001).  Set to 0 to disable.
+        self._min_code_steps_before_submit = int(
+            os.environ.get("FINANCIAL_ENV_MIN_CODE_STEPS", "1")
+        )
+        self._code_steps_taken = 0
 
     # ------------------------------------------------------------------
     # reset
@@ -88,6 +96,7 @@ class FinancialEnvironment(Environment):
         )
         self._done = False
         self._cumulative_reward = 0.0
+        self._code_steps_taken = 0
 
         # Create a working directory and copy the source xlsx into it
         self._workdir = tempfile.mkdtemp(prefix=f"financial_env_{task_id}_")
@@ -358,6 +367,10 @@ class FinancialEnvironment(Environment):
 
         reward, breakdown = self._compute_code_reward(code, succeeded, stdout)
         self._cumulative_reward += reward
+        # Count this code step regardless of success — even a failed attempt
+        # shows the agent at least tried before submitting.  The submit gate
+        # below uses this counter to refuse early submits.
+        self._code_steps_taken += 1
 
         # Surface the reward decomposition in feedback — useful for debugging
         # and for inspecting what the shaper credited each step.
@@ -375,8 +388,43 @@ class FinancialEnvironment(Environment):
     # ------------------------------------------------------------------
     # Submit handlers
     # ------------------------------------------------------------------
+    def _early_submit_rejected(self) -> FinancialObservation | None:
+        """If the agent hasn't taken enough code steps yet, reject the submit
+        with a small penalty AND keep the episode open.  Returns the rejection
+        observation, or None if the submit is allowed to proceed.
+
+        Why not end the episode?  Ending makes a single bad attempt costly.
+        Keeping it open lets the agent recover within its remaining budget,
+        and the cost is just one wasted step — exactly the right shape of
+        feedback for an RL agent learning the task.
+        """
+        if self._code_steps_taken >= self._min_code_steps_before_submit:
+            return None
+        n = self._min_code_steps_before_submit
+        feedback = (
+            f"❌ Submit rejected: you must execute at least {n} code step"
+            f"{'' if n == 1 else 's'} before submitting (you've taken "
+            f"{self._code_steps_taken} so far). "
+            "Use action_type='code' to read or modify the file first, then "
+            "submit. This rejection counts as one of your "
+            f"{self.MAX_STEPS} steps."
+        )
+        # Small penalty to discourage the pattern, but episode stays open so
+        # the agent has remaining steps to do real work.
+        reward = 0.001
+        self._cumulative_reward += reward
+        at_limit = self._state.step_count >= self.MAX_STEPS
+        if at_limit:
+            self._done = True
+            feedback += "\n\n⚠ Maximum steps reached — episode ending."
+        return self._obs(feedback=feedback, reward=reward, done=at_limit)
+
     def _handle_submit_text(self, answer: str) -> FinancialObservation:
         """Grade a text answer (for QA tasks)."""
+        early = self._early_submit_rejected()
+        if early is not None:
+            return early
+
         task = self._current_task
         assert task is not None
 
@@ -392,6 +440,10 @@ class FinancialEnvironment(Environment):
 
     def _handle_submit_file(self, file_path: str) -> FinancialObservation:
         """Grade a modified xlsx file (for MODIFY tasks)."""
+        early = self._early_submit_rejected()
+        if early is not None:
+            return early
+
         task = self._current_task
         assert task is not None
 

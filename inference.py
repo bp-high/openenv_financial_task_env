@@ -73,6 +73,10 @@ CRITICAL RULES:
 4. Use print() liberally to see data. Read the output carefully before your next step.
 5. You have a limited number of steps. Be efficient — explore in step 1, solve in
    step 2-3, submit.
+6. **You MUST execute at least one code step before submitting.** The
+   environment will reject SUBMIT_ANSWER and SUBMIT_FILE on step 1 — you
+   need to read or modify the file with code first. Submitting the source
+   file unchanged is never a correct solve and will be rejected.
 
 RESPONSE FORMAT — use EXACTLY one of:
 
