@@ -556,6 +556,16 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
                    help="merge new task results into an existing --output-dir "
                         "(replaces any prior entries for the same task_ids; "
                         "leaves all other task results and trajectories intact)")
+    p.add_argument("--skip-completed", action="store_true",
+                   help="when used with --resume, skip tasks whose prior "
+                        "result is 'clean': no error, score >= threshold, "
+                        "and >1 step.  Re-runs only tasks that errored, "
+                        "scored low, or were single-step (the Phase-7 "
+                        "exploit pattern).  Saves API spend on re-collection.")
+    p.add_argument("--skip-completed-threshold", type=float, default=0.05,
+                   help="score floor used by --skip-completed (default 0.05). "
+                        "Anything below this is considered a failed run and "
+                        "gets re-tried.")
     p.add_argument("--model", default=os.environ.get("MODEL_NAME", DEFAULT_MODEL))
     p.add_argument("--api-base", default=os.environ.get("API_BASE_URL", DEFAULT_API_BASE))
     p.add_argument("--env-url", default=os.environ.get("ENV_URL", DEFAULT_ENV_URL))
@@ -624,17 +634,47 @@ async def async_main(args: argparse.Namespace) -> None:
     if args.resume and prior_results:
         print(f"\n# RESUME: loaded {len(prior_results)} prior task results from {out_dir}/results.json")
 
+    # --skip-completed: drop tasks whose prior result is "clean".  A clean
+    # result is one that errored cleanly with score >= threshold AND took
+    # more than 1 step (1-step results are the Phase-7 exploit pattern and
+    # should always be re-run).
+    skipped_count = 0
+    if args.resume and args.skip_completed and prior_results:
+        prior_by_id = {r["task_id"]: r for r in prior_results}
+        threshold = args.skip_completed_threshold
+
+        def _is_clean(prior: Dict[str, Any]) -> bool:
+            if prior.get("error"):
+                return False
+            if float(prior.get("score", 0)) < threshold:
+                return False
+            if int(prior.get("steps", 0)) <= 1:
+                return False  # 1-step submit_file pattern — always retry
+            return True
+
+        before = len(tasks)
+        tasks = [t for t in tasks if not _is_clean(prior_by_id.get(t["id"], {}))]
+        skipped_count = before - len(tasks)
+        print(f"# --skip-completed: skipping {skipped_count} clean tasks "
+              f"(score>={threshold}, steps>1, no error). "
+              f"Will re-run {len(tasks)} tasks.")
+
     print(f"# Run config")
     print(f"  model       : {args.model}")
     print(f"  api_base    : {args.api_base}")
     print(f"  env_url     : {args.env_url}")
     print(f"  split       : {args.split}")
     print(f"  family      : {args.family}")
-    print(f"  task count  : {len(tasks)}")
+    print(f"  task count  : {len(tasks)}{f' (skipped {skipped_count} clean)' if skipped_count else ''}")
     print(f"  max_steps   : {args.max_steps}")
     print(f"  task_timeout: {args.task_timeout}s")
     print(f"  output_dir  : {out_dir}")
     print()
+
+    if not tasks:
+        print("# Nothing to do — all tasks are already clean.  Exiting.")
+        log_file.close()
+        return
 
     client = OpenAI(base_url=args.api_base, api_key=api_key)
     ws_url = _to_ws_url(args.env_url)

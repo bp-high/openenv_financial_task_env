@@ -951,9 +951,39 @@ Layer 8 prevents future grader gaps from leaking into SFT training data.
 
 - graders, manifest, data, deps
 
+### Phase 9.1 — `--skip-completed` for cheap re-runs
+
+After Phase 9 landed, the natural question was: "do I just run with `--resume`
+and the env will sort it out?"  Answer: no — `--resume` alone re-runs every
+selected task and merges. To save API spend on already-good trajectories,
+added a `--skip-completed` flag to [`inference.py`](inference.py).
+
+When set with `--resume`, drops tasks whose prior result is **clean**:
+- `error` column empty
+- `score >= --skip-completed-threshold` (default `0.05`)
+- `steps > 1` — single-step results are the Phase-7 exploit pattern; always retried regardless of score
+
+Re-runs only tasks that errored, scored low, or were single-step.  Concretely
+for the existing MiniMax baseline run: 13 skipped (clean), 9 retried (low
+score). For a Kimi train-split run with 1-step submit_file exploits, those
+all fall into the "steps ≤ 1" bucket and get correctly re-tried under the
+new Phase-9 env gate.
+
+Usage:
+```bash
+python3 inference.py \
+  --split train \
+  --resume --skip-completed \
+  --output-dir runs/teacher_kimi_k25_train \
+  --model moonshotai/Kimi-K2.5 ...
+```
+
+If everything's already clean, the script prints "Nothing to do" and exits
+without spending a cent.
+
 ---
 
-## Current state (post-Phase 9)
+## Current state (post-Phase 9.1)
 
 ### Repo layout
 
