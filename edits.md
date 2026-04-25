@@ -678,7 +678,102 @@ action — costs ~$0.50-2 in API tokens for a 22-task eval depending on model.
 
 ---
 
-## Current state (post-Phase 6)
+## Phase 7 — Live-discovered exploit + anti-exploit fix
+
+**Trigger:** during Kimi-K2.5 eval (Apr 25, 2026), the model submitted the
+**unmodified source file in step 1** for two tasks and scored very high:
+
+| Task | Edit type | Score on src-unchanged submit | Why it worked |
+|---|---|---|---|
+| `pptarena_case_40_hindu_center_titles` | Title alignment | 0.998 | Paragraph-level `alignment` wasn't in `_shape_style`; everything else (text, position, size, font attrs) was identical between source and gold |
+| `pptarena_case_26_match_slide_colors_to_theme` | Theme color | 0.971 | Gold uses theme-color references (None RGB); source uses explicit RGB. The mismatch dilutes across 30 shapes for only ~3% drop |
+
+This is genuine reward hacking by an inference-time agent, exactly what the
+"hard to game" criterion in the judging guide warns about. Two fixes
+delivered:
+
+### Fix 1: extended `_shape_style` (catches the per-attribute gaps)
+
+Added two new attributes to the per-shape style extractor:
+
+| Attribute | Source | Catches |
+|---|---|---|
+| `para_alignment` | `shape.text_frame.paragraphs[0].alignment` | "Center the title" / "right-align" tasks |
+| `fill_theme` | `shape.fill.fore_color.theme_color` (when fill is solid but `.rgb` raises) | "Match colors to theme" tasks where gold uses theme refs and source uses explicit RGB |
+
+Reweighted `_STYLE_WEIGHTS` from 7 attrs → 9 attrs:
+
+```
+fill_rgb 0.22 | fill_theme 0.08 | font_rgb 0.17 | para_alignment 0.15
+font_size_pt 0.12 | line_rgb 0.08 | font_name 0.08
+font_bold 0.05 | font_italic 0.05
+```
+
+Status: improves shape-level discrimination, but the **dilution problem
+still wins** when only 2 of 55 shapes change (case_40 src-vs-gold went
+from 0.998 → 0.997 — basically unchanged because of averaging). This is
+why we need Fix 2.
+
+### Fix 2: byte-equality anti-exploit at grade time (the actual fix)
+
+Added in [`graders/__init__.py`](graders/__init__.py)'s `grade_task`:
+**if the agent's submitted file is byte-identical to the source AND the
+task isn't OSWorld's `infeasible` sentinel, return 0.001 immediately.**
+
+```python
+if src_file_exists and not is_infeasible_task:
+    if same_bytes(output_path, source_file):
+        return 0.001  # agent didn't actually do anything
+```
+
+This kills the entire class of "submit source unchanged" exploits across
+all three families, regardless of which specific attribute the diff
+misses. Validation:
+
+| Test | Before fix | After fix |
+|---|---|---|
+| Submit unmodified source on `case_40` | 0.998 | **0.001** ✓ |
+| Submit unmodified source on `case_26` | 0.971 | **0.001** ✓ |
+| Submit gold on `case_40` | 0.999 | 0.999 ✓ no regression |
+| Submit gold on `case_26` | 0.999 | 0.999 ✓ no regression |
+| All 8 pptx eval tasks, gold-vs-gold | 0.999 | 0.999 ✓ no regression |
+
+The OSWorld `infeasible` task (where not modifying *is* the correct
+answer) is correctly excluded — that path uses the existing `infeasible`
+evaluator function which already does its own equality check and credits
+the agent.
+
+### Important implication for SFT corpus building
+
+When we eventually filter trajectories for the SFT corpus, **drop any
+trajectory where `n_steps == 1` and the only action was `submit_file`**
+even after this fix. Reasons:
+1. Defense in depth — if a future grader gap appears, we don't want the
+   student model trained on "submit unchanged" wins
+2. A real solve takes at least one code step; 1-step `submit_file` is
+   structurally suspicious
+
+This filter is documented as a TODO for the SFT collection script.
+
+### Re-eval needed
+
+The Kimi-K2.5 baseline numbers from `runs/baseline_kimi_k25_eval/` were
+collected with the pre-fix grader. The two exploited tasks are now
+correctly graded at 0.001 instead of 0.998/0.971, lowering the run's
+average. Either re-run Kimi on those two tasks with `--resume`, or
+recompute the average locally:
+
+```bash
+# Quick local recompute (no re-inference) — assumes you already pushed
+# updated graders. The OLD numbers are inflated; the NEW numbers reflect
+# what Kimi actually solved.
+```
+
+(Recommendation: re-run with `--resume --task-ids pptarena_case_40_hindu_center_titles,pptarena_case_26_match_slide_colors_to_theme`. Costs <$0.10.)
+
+---
+
+## Current state (post-Phase 7)
 
 ### Repo layout
 
@@ -740,6 +835,7 @@ openenv_financial_task_env/
 | Glob the gold via `data/` | ✅ Gold moved out of `data/` for the episode |
 | Read manifest.jsonl to find gold path | ⚠️ Still reachable; would need full sandbox isolation (TODO) |
 | Generic-distance gaming | ✅ `eval_check` rewards spec-aligned progress |
+| **Submit-source-unchanged** (Phase 7) | ✅ Byte-equality check at grade time → 0.001 |
 | `lib_engagement` regex gaming | 🟡 Trivial cap (0.010); AST-based check would harden (TODO) |
 | `mutation` spam | 🟡 Capped per-step but could spam-save garbage; could couple to progress (TODO) |
 

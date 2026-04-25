@@ -253,40 +253,61 @@ def _shape_style(shape) -> Dict[str, Any]:
     type, None color, exception) becomes None.  Two None values on the same
     key match; one None vs one non-None counts as a mismatch."""
     style: Dict[str, Any] = {
-        "fill_rgb":     None,  # solid fill RGB hex (str)
-        "line_rgb":     None,  # line/border RGB hex (str)
-        "font_name":    None,  # first run, str
-        "font_size_pt": None,  # first run, float
-        "font_bold":    None,  # first run, bool/None (None = inherited)
-        "font_italic":  None,  # first run, bool/None
-        "font_rgb":     None,  # first run, RGB hex (str)
+        "fill_rgb":       None,  # solid fill RGB hex (str)
+        "fill_theme":     None,  # theme color name (str) — captures gold-uses-theme tasks
+        "line_rgb":       None,  # line/border RGB hex (str)
+        "font_name":      None,  # first run, str
+        "font_size_pt":   None,  # first run, float
+        "font_bold":      None,  # first run, bool/None (None = inherited)
+        "font_italic":    None,  # first run, bool/None
+        "font_rgb":       None,  # first run, RGB hex (str)
+        "para_alignment": None,  # first paragraph: PP_ALIGN.CENTER, LEFT, RIGHT, JUSTIFY (str)
     }
     # ---- shape fill / line colors ----
+    # Capture both explicit RGB and theme-color reference: a "match colors to
+    # theme" task changes ad-hoc RGB to theme references, and we want to see
+    # that as a real difference rather than letting both sides become None.
     try:
         from pptx.enum.dml import MSO_FILL_TYPE
-        if shape.fill.type == MSO_FILL_TYPE.SOLID:
-            style["fill_rgb"] = str(shape.fill.fore_color.rgb)
+        ft = shape.fill.type
+        if ft == MSO_FILL_TYPE.SOLID:
+            try:
+                style["fill_rgb"] = str(shape.fill.fore_color.rgb)
+            except Exception:
+                # solid fill but rgb raises → it's a theme color
+                try:
+                    style["fill_theme"] = str(shape.fill.fore_color.theme_color)
+                except Exception:
+                    pass
     except Exception:
         pass
     try:
         style["line_rgb"] = str(shape.line.color.rgb)
     except Exception:
         pass
-    # ---- first-run font properties ----
+    # ---- first-paragraph + first-run text properties ----
     try:
         if shape.has_text_frame:
             tf = shape.text_frame
-            if tf.paragraphs and tf.paragraphs[0].runs:
-                run = tf.paragraphs[0].runs[0]
-                style["font_name"] = run.font.name
-                if run.font.size is not None:
-                    style["font_size_pt"] = float(run.font.size.pt)
-                style["font_bold"] = run.font.bold
-                style["font_italic"] = run.font.italic
+            if tf.paragraphs:
+                p0 = tf.paragraphs[0]
+                # Paragraph-level alignment (LEFT/CENTER/RIGHT/JUSTIFY) —
+                # critical for "center the title", "right-align" tasks.
                 try:
-                    style["font_rgb"] = str(run.font.color.rgb)
+                    style["para_alignment"] = str(p0.alignment) if p0.alignment is not None else None
                 except Exception:
                     pass
+                if p0.runs:
+                    run = p0.runs[0]
+                    style["font_name"] = run.font.name
+                    if run.font.size is not None:
+                        style["font_size_pt"] = float(run.font.size.pt)
+                    style["font_bold"] = run.font.bold
+                    style["font_italic"] = run.font.italic
+                    try:
+                        style["font_rgb"] = str(run.font.color.rgb)
+                    except Exception:
+                        pass
     except Exception:
         pass
     return style
@@ -343,13 +364,15 @@ def _coord_match(r_val, o_val, denom: int) -> float:
 
 
 _STYLE_WEIGHTS = {
-    "fill_rgb":     0.30,  # most often-edited attribute in styling tasks
-    "line_rgb":     0.10,
-    "font_name":    0.10,
-    "font_size_pt": 0.15,
-    "font_bold":    0.075,
-    "font_italic":  0.075,
-    "font_rgb":     0.20,
+    "fill_rgb":       0.22,  # most often-edited attribute in styling tasks
+    "fill_theme":     0.08,  # NEW: theme-color reference (catches "match colors to theme")
+    "line_rgb":       0.08,
+    "font_name":      0.08,
+    "font_size_pt":   0.12,
+    "font_bold":      0.05,
+    "font_italic":    0.05,
+    "font_rgb":       0.17,
+    "para_alignment": 0.15,  # NEW: catches "center the title" and friends
 }
 
 
@@ -441,13 +464,26 @@ def grade_pptx(task: Dict[str, Any], output_path: str) -> float:
     return round(0.2 * slide_score + 0.8 * avg_shape, 4)
 
 
+def _same_bytes(a: str, b: str) -> bool:
+    """True iff two files exist and have identical SHA-256.  Used to detect
+    'submitted source unchanged' exploits — a model that bypasses the work
+    by handing back the input file."""
+    import hashlib
+    try:
+        ah = hashlib.sha256(open(a, "rb").read()).hexdigest()
+        bh = hashlib.sha256(open(b, "rb").read()).hexdigest()
+        return ah == bh
+    except Exception:
+        return False
+
+
 def grade_task(task: Dict[str, Any], answer: str = "", output_path: str = "") -> float:
     """Grade a task.  Returns score in (0.001, 0.999).
 
     For QA tasks:    uses *answer* (text) vs task["reference_answer"].
     For MODIFY tasks (xlsx): cell-diff against task["reference_file"].
     For MODIFY tasks (docx): validity + diff + OSWorld evaluator.
-    For MODIFY tasks (pptx): validity + slide-count + per-shape text diff.
+    For MODIFY tasks (pptx): validity + slide-count + per-shape composite.
     """
     task_type = task.get("task_type", "QA")
     family = task.get("family", "xlsx")
@@ -458,6 +494,24 @@ def grade_task(task: Dict[str, Any], answer: str = "", output_path: str = "") ->
     elif task_type == "MODIFY":
         if not output_path or not Path(output_path).exists():
             return 0.001
+
+        # ANTI-EXPLOIT: detect "submitted source unchanged".  A model that
+        # discovers a task where source-vs-gold scores high (e.g., a small
+        # alignment edit on a 55-shape deck) can game the diff by handing
+        # back the input file.  We refuse to credit byte-identical
+        # submissions UNLESS the task is OSWorld's `infeasible` sentinel
+        # (where not-modifying is the correct answer).
+        src = task.get("source_file", "")
+        is_infeasible = False
+        ev = task.get("evaluator") or {}
+        for c in ev.get("checks") or []:
+            if c.get("func") == "infeasible":
+                is_infeasible = True
+                break
+        if src and Path(src).exists() and not is_infeasible:
+            if _same_bytes(output_path, src):
+                return 0.001
+
         if family == "docx":
             return _clamp_score(grade_docx(task, output_path))
         if family == "pptx":

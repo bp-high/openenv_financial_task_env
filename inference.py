@@ -492,9 +492,20 @@ def model_slug(name: str) -> str:
 
 
 async def async_main(args: argparse.Namespace) -> None:
-    api_key = os.environ.get("HF_TOKEN") or os.environ.get("API_KEY")
+    # Pick the API key based on the api-base URL so you don't have to alias
+    # env vars when switching providers.  Provider-specific env wins; falls back
+    # to a generic chain if nothing matches.
+    if "nebius" in args.api_base:
+        _envs = ("NEBIUS_API_KEY", "API_KEY", "HF_TOKEN")
+    elif "huggingface" in args.api_base or "hf.co" in args.api_base:
+        _envs = ("HF_TOKEN", "API_KEY", "NEBIUS_API_KEY")
+    elif "openai" in args.api_base:
+        _envs = ("OPENAI_API_KEY", "API_KEY", "HF_TOKEN")
+    else:
+        _envs = ("API_KEY", "HF_TOKEN", "NEBIUS_API_KEY", "OPENAI_API_KEY")
+    api_key = next((os.environ[k] for k in _envs if os.environ.get(k)), None)
     if not api_key:
-        print("ERROR: HF_TOKEN or API_KEY environment variable not set.", file=sys.stderr)
+        print(f"ERROR: none of {_envs} are set for api_base={args.api_base!r}", file=sys.stderr)
         sys.exit(1)
 
     # Pick tasks
