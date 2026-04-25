@@ -268,6 +268,76 @@ def get_model_response(client: OpenAI, model_name: str, messages: List[Dict[str,
         return ""
 
 
+def _extract_kimi_tool_call_code(response: str) -> Optional[str]:
+    """Kimi K2/K2.5 emits its native tool-call wire format even when the
+    chat API is called without `tools=`.  Examples we've seen in the wild:
+
+        <|tool_calls_section_begin|>
+        <|tool_call_begin|> functions.python:0
+        <|tool_call_argument_begin|>
+        {"code": "import openpyxl\n..."}     # may or may not be terminated;
+                                              # responses often hit max_tokens
+                                              # mid-string
+
+    Strategy: locate the marker, then try (in order):
+      1. Strict JSON parse of a `{...}` block
+      2. Regex pull of an `"code|source|script|python": "..."` value, even
+         if the closing `"` and `}` are missing (truncation case)
+    """
+    if "<|tool_call_begin|>" not in response and "<|tool_calls_section_begin|>" not in response:
+        return None
+
+    # Slice everything after the argument-begin marker (or the call-begin
+    # marker as a fallback) — that's where the JSON arg lives.
+    body = response
+    for marker in ("<|tool_call_argument_begin|>", "<|tool_call_begin|>"):
+        if marker in response:
+            body = response.split(marker, 1)[1]
+            break
+
+    # Strict JSON first (works on well-formed, untruncated responses)
+    m = re.search(r"\{.*?\}", body, re.DOTALL)
+    if m:
+        try:
+            obj = json.loads(m.group(0))
+            for key in ("code", "source", "script", "python", "command"):
+                if key in obj and isinstance(obj[key], str):
+                    return obj[key]
+        except Exception:
+            pass
+
+    # Truncation-tolerant extraction: find `"code": "...` and take everything
+    # to the end of the body OR the last unescaped `"` we can find.  If the
+    # response was cut mid-string, we end up with a partial-but-runnable code
+    # snippet, which is still better than dropping the action entirely.
+    for key in ("code", "source", "script", "python", "command"):
+        m = re.search(rf'"{key}"\s*:\s*"', body)
+        if not m:
+            continue
+        rest = body[m.end():]
+        # Try to find the closing unescaped quote
+        out_chars = []
+        i = 0
+        while i < len(rest):
+            c = rest[i]
+            if c == "\\" and i + 1 < len(rest):
+                out_chars.append(c)
+                out_chars.append(rest[i + 1])
+                i += 2
+                continue
+            if c == '"':
+                break
+            out_chars.append(c)
+            i += 1
+        raw = "".join(out_chars)
+        try:
+            return raw.encode().decode("unicode_escape")
+        except Exception:
+            return raw
+
+    return None
+
+
 def extract_action(response: str):
     """Parse model response into (action_type, content)."""
     if "SUBMIT_ANSWER:" in response:
@@ -279,6 +349,11 @@ def extract_action(response: str):
         path = re.sub(r"[`\s\"']+$", "", path).strip()
         path = re.sub(r"^[`\"']+", "", path).strip()
         return "submit_file", path
+
+    # Kimi K2/K2.5 native tool-call format
+    tool_code = _extract_kimi_tool_call_code(response)
+    if tool_code:
+        return "code", tool_code
 
     m = re.search(r"```python\s*\n(.*?)```", response, re.DOTALL)
     if m:
