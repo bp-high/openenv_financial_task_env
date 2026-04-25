@@ -773,7 +773,101 @@ recompute the average locally:
 
 ---
 
-## Current state (post-Phase 7)
+## Phase 8 — SFT corpus builder (trajectory → messages-format JSONL)
+
+**Goal:** turn teacher trajectories (collected on the train split via
+`inference.py --split train`) into an SFT-ready corpus for warm-starting
+a small student model (Qwen2.5-Coder-3B-Instruct) before GRPO.
+
+### New file
+- [`data_pipeline/build_sft_corpus.py`](data_pipeline/build_sft_corpus.py)
+  — reads a `runs/<dir>/{summary.csv, trajectories/*.jsonl}` produced by
+  `inference.py`, applies six filters, and emits a JSONL where each row
+  is one accepted episode in the
+  [TRL `SFTTrainer` `messages` format](https://huggingface.co/docs/trl/main/en/sft_trainer):
+
+  ```jsonl
+  {"task_id": "...", "family": "xlsx", "primary_tag": "Calculation",
+   "split": "train", "score": 0.94, "n_steps": 6,
+   "messages": [
+     {"role": "system",    "content": <SYSTEM_PROMPTS[family]>},
+     {"role": "user",      "content": <task instruction + source path + family>},
+     {"role": "assistant", "content": "```python\n…\n```"},
+     {"role": "user",      "content": "Code execution result (step 1/15):\n…"},
+     {"role": "assistant", "content": "SUBMIT_FILE: /…"},
+     ...
+   ]}
+  ```
+
+### Filters (in order)
+
+| # | Filter | What it drops | Why |
+|---|---|---|---|
+| 1 | `error` column non-empty | Failed runs (timeouts, model crashes) | No useful signal |
+| 2 | `n_steps < --min-steps` (default 2) | Trivial 1-step runs | Real solves take ≥1 code step |
+| 3 | **1-step `submit_file`** | Trajectories where the only action is `submit_file` | **Defense in depth against grader exploits** — Phase 7 proved a model can submit source unchanged and beat the diff threshold; even with the byte-equality check, future grader gaps could re-open this. A real solve takes ≥1 code step; we never want to teach the student "skip the work". Always dropped, regardless of score. |
+| 4 | `final_score < --score-threshold` (default 0.4) | Low-quality solves | Don't train on partial-fail patterns |
+| 5 | Malformed action types | Action types outside `{code, submit, submit_file}` | Schema enforcement |
+| 6 | No real work | Trajectories with no successful code step (`reward > 0.005`) | Drops "model only made syntax errors" cases |
+
+The `--min-steps 2` and the explicit 1-step-submit-file check are
+**redundant by design** — both catch the same exploit class so a future
+refactor that loosens one doesn't open the door.
+
+### Message reconstruction details
+
+- **System prompt:** imported verbatim from `inference.SYSTEM_PROMPTS[family]`
+  so the SFT corpus matches what the model sees at deployment.
+- **First user message:** task instruction + constraints + source-file
+  path (extracted from the trajectory's first code action via regex,
+  falls back to manifest's `source_file`) + family + task type. The
+  env's xlsx-summary section is intentionally skipped to avoid re-opening
+  files at corpus-build time.
+- **Assistant turns:** action content wrapped in the format the
+  `extract_action()` parser expects:
+  - `code` → ` ```python\n{content}\n``` `
+  - `submit` → `SUBMIT_ANSWER: {content}`
+  - `submit_file` → `SUBMIT_FILE: {content}`
+- **User turns:** mirror inference.py's per-step feedback message:
+  ```
+  Code execution result (step {n}/{max_steps}):
+  {feedback}
+
+  Source file: {path}
+  ```
+
+### Smoke test (against the MiniMax-M2.1 eval run)
+
+```
+Input rows    : 22
+Accepted      : 10
+Drops:
+  low_score                    12
+
+Accepted breakdown:
+  docx      2
+  pptx      4
+  xlsx      4
+Avg steps   : 10.8
+Avg score   : 0.794
+```
+
+For the actual SFT corpus we'll use **train-split teacher trajectories
+from Kimi-K2.5**, not the eval baseline. With 97 train tasks at
+~30–50% retention rate that's ~30–50 high-quality episodes — enough for
+a meaningful SFT warm-start before GRPO.
+
+### Modified files
+
+- None (new file only)
+
+### Files unchanged in Phase 8
+
+- env server, graders, manifest, data, deps
+
+---
+
+## Current state (post-Phase 8)
 
 ### Repo layout
 
@@ -836,6 +930,7 @@ openenv_financial_task_env/
 | Read manifest.jsonl to find gold path | ⚠️ Still reachable; would need full sandbox isolation (TODO) |
 | Generic-distance gaming | ✅ `eval_check` rewards spec-aligned progress |
 | **Submit-source-unchanged** (Phase 7) | ✅ Byte-equality check at grade time → 0.001 |
+| **1-step-submit-file in SFT corpus** (Phase 8) | ✅ Builder drops these even at high score |
 | `lib_engagement` regex gaming | 🟡 Trivial cap (0.010); AST-based check would harden (TODO) |
 | `mutation` spam | 🟡 Capped per-step but could spam-save garbage; could couple to progress (TODO) |
 
