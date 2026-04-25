@@ -12,7 +12,7 @@ tasks:
     max_steps: 15
     grader:
       type: programmatic
-      description: "QA grading — extracts numbers from agent answer, compares against reference (85). Score 0.0–1.0 based on numeric match with 5% tolerance."
+      description: "QA grading — extracts numbers from agent answer, compares against reference (85). Score 0.001–0.999 based on numeric match with 5% tolerance."
 
   - id: task_2
     name: Retrieve TW EOL Charge
@@ -20,7 +20,7 @@ tasks:
     max_steps: 15
     grader:
       type: programmatic
-      description: "QA grading — extracts numbers from agent answer, compares against reference (113291). Score 0.0–1.0 based on numeric match with 5% tolerance."
+      description: "QA grading — extracts numbers from agent answer, compares against reference (113291). Score 0.001–0.999 based on numeric match with 5% tolerance."
 
   - id: task_3
     name: Portfolio Mark-to-Market Change
@@ -28,7 +28,15 @@ tasks:
     max_steps: 15
     grader:
       type: programmatic
-      description: "QA grading — extracts numbers from agent answer, compares against reference values ($1,989,600 and 27.9%). Score 0.0–1.0 based on numeric match + keyword overlap."
+      description: "QA grading — extracts numbers from agent answer, compares against reference ($1,989,600 and 27.9%). Score 0.001–0.999 based on numeric match + keyword overlap."
+
+  - id: task_4
+    name: Summarize Pipeline Imbalances
+    difficulty: medium
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
 
   - id: task_5
     name: Audit and Correct Formula Errors
@@ -36,7 +44,23 @@ tasks:
     max_steps: 15
     grader:
       type: programmatic
-      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.0–1.0."
+      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+
+  - id: task_6
+    name: Create Table and Apply Filter
+    difficulty: medium
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+
+  - id: task_7
+    name: Add Weekday Row and Data Entry
+    difficulty: medium
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
 
   - id: task_8
     name: Balance Sheet Validation and Indicators
@@ -44,4 +68,20 @@ tasks:
     max_steps: 15
     grader:
       type: programmatic
-      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.0–1.0."
+      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+
+  - id: task_9
+    name: Create Scenario3 Worksheet
+    difficulty: hard
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+
+  - id: task_10
+    name: Consolidate by Type and Area
+    difficulty: hard
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."

@@ -9,6 +9,8 @@ app_port: 8000
 base_path: /web
 tags:
   - openenv
+  - agent-environment
+  - rl-environment
 ---
 
 # Financial Task Environment

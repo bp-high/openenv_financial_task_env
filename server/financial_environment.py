@@ -28,6 +28,7 @@ from openenv.core.env_server.types import Observation, State
 from models import FinancialAction, FinancialObservation
 from tasks import TASKS, TASK_IDS, get_task
 from graders import grade_task
+from rewards import RewardTracker
 
 
 class FinancialEnvironment(Environment):
@@ -53,6 +54,12 @@ class FinancialEnvironment(Environment):
         self._done = False
         self._cumulative_reward = 0.0
         self._workdir: str | None = None
+        self._gold_stash_dir: str | None = None  # per-episode stash for gold files
+        self._gold_originals: list[tuple[str, str]] = []  # (original_path, stashed_path) for restore
+        self._reward_tracker: RewardTracker | None = None
+        # Progress signal (distance-to-gold) is on by default; set
+        # FINANCIAL_ENV_PROGRESS=0 to disable for clean eval.
+        self._progress_enabled = os.environ.get("FINANCIAL_ENV_PROGRESS", "1") == "1"
 
     # ------------------------------------------------------------------
     # reset
@@ -63,8 +70,18 @@ class FinancialEnvironment(Environment):
         episode_id: Optional[str] = None,
         **kwargs: Any,
     ) -> FinancialObservation:
+        # Clean up any leftover state from a prior episode.  In particular this
+        # restores stashed gold files to their data/ locations — without this,
+        # back-to-back resets would leak gold permanently into /tmp.
+        if self._workdir is not None or self._gold_stash_dir is not None:
+            self.close()
+
         task_id: str = kwargs.get("task_id", "task_1")
-        self._current_task = get_task(task_id)
+        # IMPORTANT: copy the global task dict — we'll mutate per-episode fields
+        # (reference_file, evaluator.checks[*].expected_files) to point at a
+        # stashed location the agent can't easily glob for.  Mutating the global
+        # would break subsequent episodes.
+        self._current_task = dict(get_task(task_id))
         self._state = State(
             episode_id=episode_id or str(uuid4()),
             step_count=0,
@@ -80,6 +97,35 @@ class FinancialEnvironment(Environment):
             work_file = str(Path(self._workdir) / Path(src).name)
         else:
             work_file = ""
+
+        # Stash gold files into a private tmpdir.  This is best-effort sandboxing:
+        # the dir name is uuid-randomized and lives outside the repo data tree, so
+        # naive `glob('/app/env/data/**/*_ref*')` won't find it.  A determined
+        # agent that scans /tmp can still find it — for that we'd need bwrap or
+        # seccomp.  This kills the most common reward-hacking vector.
+        self._gold_stash_dir = tempfile.mkdtemp(prefix="oe_gold_")
+        self._stash_gold_files(self._current_task, Path(self._gold_stash_dir))
+
+        # Stand up the per-episode reward tracker — *after* gold stashing, so the
+        # tracker's progress-distance fn reads the stashed (hidden) gold path.
+        family = self._current_task.get("family", "xlsx")
+        gold = self._current_task.get("reference_file", "")
+        if work_file and family in ("xlsx", "pptx", "docx"):
+            try:
+                # Per-task evaluator callable for the new 6th reward signal.
+                # Only docx tasks currently have one; xlsx/pptx pass None.
+                task_eval = self._make_task_evaluator() if family == "docx" else None
+                self._reward_tracker = RewardTracker(
+                    family=family,
+                    working_file=work_file,
+                    gold_file=gold or None,
+                    enable_progress=self._progress_enabled,
+                    task_evaluator=task_eval,
+                )
+            except Exception:
+                self._reward_tracker = None
+        else:
+            self._reward_tracker = None
 
         # Generate an xlsx summary to include in the observation
         xlsx_summary = self._summarize_xlsx(work_file) if work_file else "No source file."
@@ -150,6 +196,110 @@ class FinancialEnvironment(Environment):
             )
 
     # ------------------------------------------------------------------
+    # Gold stashing — defense against reward hacking via gold-file-read
+    # ------------------------------------------------------------------
+    def _stash_gold_files(self, task: dict[str, Any], stash_dir: Path) -> None:
+        """Move all gold files referenced by `task` into `stash_dir` and rewrite
+        the task's gold-file paths to point at the moved copies.  We track the
+        original paths in `self._gold_originals` so close() can restore them.
+
+        Why move (not copy)?  Copying leaves the originals glob-able in data/,
+        defeating the purpose.  Move rents the file to a unguessable tmp path
+        for the duration of the episode; close() puts it back.
+
+        Caveat: this is single-tenant per task — two parallel episodes of the
+        same task would race.  For multi-tenant training, run one env per
+        worker process, or use a lockfile (TODO).
+        """
+        from secrets import token_hex
+
+        moves: list[tuple[str, str]] = []  # (original, stashed) for restore
+        path_map: dict[str, str] = {}      # original -> stashed (dedup)
+
+        def _stash(src: str, label: str) -> str:
+            """Move src into stash_dir. Idempotent: same src always maps to the
+            same stashed path within an episode."""
+            if src in path_map:
+                return path_map[src]
+            suffix = Path(src).suffix or ""
+            dest = stash_dir / f"{label}_{token_hex(3)}{suffix}"
+            try:
+                Path(src).rename(dest)  # atomic on same FS
+            except OSError:
+                shutil.copy2(src, dest)
+                try:
+                    Path(src).unlink()
+                except OSError:
+                    pass  # best-effort
+            moves.append((src, str(dest)))
+            path_map[src] = str(dest)
+            return str(dest)
+
+        # 1. DOCX evaluator's per-check expected_files (multi-gold support)
+        # Process this FIRST so that when we later resolve reference_file, we
+        # find the already-stashed location via path_map (handles the common
+        # case where reference_file == evaluator.checks[0].expected_files[0]).
+        evaluator = task.get("evaluator")
+        if evaluator and "checks" in evaluator:
+            new_checks: list[dict[str, Any]] = []
+            for c_idx, check in enumerate(evaluator.get("checks", []) or []):
+                new_check = dict(check)
+                new_expected: list[str] = []
+                for f_idx, ef in enumerate(check.get("expected_files") or []):
+                    if ef and Path(ef).exists():
+                        new_expected.append(_stash(ef, f"check_{c_idx}_{f_idx}"))
+                    else:
+                        # Already moved earlier this episode? Resolve via map.
+                        new_expected.append(path_map.get(ef, ef))
+                new_check["expected_files"] = new_expected
+                new_checks.append(new_check)
+            task["evaluator"] = {**evaluator, "checks": new_checks}
+
+        # 2. Top-level reference_file (xlsx grader + diff layer + tracker).
+        # Reuses any prior stash from step 1.
+        ref = task.get("reference_file", "")
+        if ref:
+            if ref in path_map:
+                task["reference_file"] = path_map[ref]
+            elif Path(ref).exists():
+                task["reference_file"] = _stash(ref, "gold_ref")
+            # else: file already gone (moved earlier?) — leave path; grader will
+            # gracefully degrade since exists() check upstream catches it.
+
+        self._gold_originals = moves  # used by close() to restore
+
+    def _make_task_evaluator(self):
+        """Return a callable f(working_file)->[0,1] running the task's evaluator
+        block, or None if the family has no per-task evaluator wired up.
+
+        Used as the 6th reward signal in RewardTracker.  Imports are lazy so
+        non-docx episodes don't pay for them."""
+        task = self._current_task
+        if not task:
+            return None
+        evaluator = task.get("evaluator") or {}
+        checks = evaluator.get("checks") or []
+        if not checks:
+            return None
+
+        from graders.docx_metrics import run_evaluator
+        conj = evaluator.get("conj", "and")
+        source_file = task.get("source_file", "")
+
+        def _eval(working_file: str) -> float:
+            try:
+                return float(run_evaluator(
+                    conj=conj,
+                    checks=checks,
+                    working_file=working_file,
+                    source_file=source_file,
+                ))
+            except Exception:
+                return 0.0
+
+        return _eval
+
+    # ------------------------------------------------------------------
     # state property
     # ------------------------------------------------------------------
     @property
@@ -159,40 +309,17 @@ class FinancialEnvironment(Environment):
     # ------------------------------------------------------------------
     # Code execution
     # ------------------------------------------------------------------
-    def _compute_code_reward(self, code: str, succeeded: bool, stdout: str) -> float:
-        """Compute a step reward for code execution based on quality signals."""
-        if not succeeded:
-            return 0.005  # Failed code gets minimal reward
+    def _compute_code_reward(self, code: str, succeeded: bool, stdout: str) -> tuple[float, dict]:
+        """Compute step reward via the unified RewardTracker.
 
-        # Count substantive lines (not imports, blanks, comments)
-        lines = code.strip().splitlines()
-        substantive = 0
-        for line in lines:
-            stripped = line.strip()
-            if not stripped:
-                continue
-            if stripped.startswith("#"):
-                continue
-            if stripped.startswith("import ") or stripped.startswith("from "):
-                continue
-            substantive += 1
+        Returns (total, breakdown) — breakdown is a dict of named components for
+        logging.  Falls back to a minimal fixed reward when no tracker is wired.
+        """
+        if self._reward_tracker is None:
+            return (0.02 if succeeded else 0.005), {"fallback": True}
 
-        # Base reward for successful execution
-        reward = 0.02
-
-        # Bonus for substantive code (up to +0.03)
-        reward += min(substantive * 0.002, 0.03)
-
-        # Bonus for producing output (agent is exploring data)
-        if stdout.strip():
-            output_lines = len(stdout.strip().splitlines())
-            reward += min(output_lines * 0.001, 0.02)
-
-        # Bonus for modification actions (save, wb.save, etc.)
-        if "save(" in code or ".save(" in code:
-            reward += 0.03
-
-        return min(reward, 0.10)  # Cap at 0.10 per code step
+        signals = self._reward_tracker.score_step(code=code, succeeded=succeeded, stdout=stdout)
+        return signals.total, signals.to_dict()
 
     def _handle_code(self, code: str) -> FinancialObservation:
         """Execute Python code in a subprocess and return stdout/stderr."""
@@ -229,8 +356,14 @@ class FinancialEnvironment(Environment):
         except Exception as e:
             feedback = f"Code execution error: {e}"
 
-        reward = self._compute_code_reward(code, succeeded, stdout)
+        reward, breakdown = self._compute_code_reward(code, succeeded, stdout)
         self._cumulative_reward += reward
+
+        # Surface the reward decomposition in feedback — useful for debugging
+        # and for inspecting what the shaper credited each step.
+        if breakdown and "fallback" not in breakdown:
+            parts = ", ".join(f"{k}={v:.3f}" for k, v in breakdown.items() if k != "total")
+            feedback += f"\n\nReward: total={breakdown['total']:.3f} ({parts})"
 
         at_limit = self._state.step_count >= self.MAX_STEPS
         if at_limit:
@@ -330,7 +463,28 @@ class FinancialEnvironment(Environment):
         )
 
     def close(self) -> None:
-        """Clean up the temporary working directory."""
+        """Clean up per-episode tempdirs.  Restores gold files to their original
+        locations under data/ (since reset() moved them out for sandboxing).
+        """
         if self._workdir and Path(self._workdir).exists():
             shutil.rmtree(self._workdir, ignore_errors=True)
         self._workdir = None
+
+        # Restore gold files to their original paths in data/ before deleting the
+        # stash dir.  If restore fails (e.g. server crashed earlier), the file
+        # stays in the stash and can be recovered manually.
+        for original, stashed in self._gold_originals:
+            try:
+                if Path(stashed).exists() and not Path(original).exists():
+                    Path(original).parent.mkdir(parents=True, exist_ok=True)
+                    Path(stashed).rename(original)
+            except OSError:
+                try:
+                    shutil.copy2(stashed, original)
+                except OSError:
+                    pass  # leave it in stash — manual recovery
+        self._gold_originals = []
+
+        if self._gold_stash_dir and Path(self._gold_stash_dir).exists():
+            shutil.rmtree(self._gold_stash_dir, ignore_errors=True)
+        self._gold_stash_dir = None

@@ -19,7 +19,11 @@ RUN uv pip install --system --no-cache-dir \
     "uvicorn>=0.24.0" \
     "pydantic>=2.0.0" \
     "websockets>=12.0" \
-    "openpyxl>=3.1.0"
+    "openpyxl>=3.1.0" \
+    "python-docx>=1.1.0" \
+    "python-pptx>=1.0.0" \
+    "rapidfuzz>=3.0.0" \
+    "Pillow>=10.0.0"
 
 COPY . /app/env/
 

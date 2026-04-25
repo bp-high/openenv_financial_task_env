@@ -1,0 +1,45 @@
+{
+  "model": "MiniMaxAI/MiniMax-M2.1",
+  "split": "eval",
+  "family": "all",
+  "n_tasks": 1,
+  "avg_score": 0.08,
+  "success_rate": 0.0,
+  "total_elapsed_s": 143.01,
+  "by_family": {
+    "xlsx": {
+      "n": 1,
+      "avg": 0.08
+    }
+  },
+  "results": [
+    {
+      "task_id": "finch_10",
+      "family": "xlsx",
+      "primary_tag": "Calculation",
+      "split": "eval",
+      "score": 0.08,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 143.01,
+      "step_rewards": [
+        0.03,
+        0.005,
+        0.03,
+        0.005,
+        0.03,
+        0.005,
+        0.03,
+        0.005,
+        0.03,
+        0.005,
+        0.03,
+        0.005,
+        0.03,
+        0.03,
+        0.08
+      ],
+      "error": null
+    }
+  ]
+}

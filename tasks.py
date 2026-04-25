@@ -255,30 +255,125 @@ TASKS["task_10"] = {
 }
 
 # ---------------------------------------------------------------------------
+# Manifest loader — pulls additional tasks (Finch-50, OSWorld docx, PPTArena,
+# TSBench) from data/manifest.jsonl.  Each manifest row already has the same
+# shape as the hand-written TASKS dict above, plus a `family` and `split` field.
+# ---------------------------------------------------------------------------
+
+import json
+
+_MANIFEST_PATH = Path(__file__).parent / "data" / "manifest.jsonl"
+
+
+def _difficulty_for(primary_tag: str) -> str:
+    """Heuristic difficulty bucket from a Finch primary_tag."""
+    easy = {"Cross-sheet/file Retrieval", "Summary / Visualization"}
+    hard = {"Financial Modeling", "Validation / Review"}
+    if primary_tag in easy:
+        return "easy"
+    if primary_tag in hard:
+        return "hard"
+    return "medium"
+
+
+def _load_manifest() -> None:
+    """Load manifest.jsonl rows into TASKS in-place.  No-op if missing."""
+    if not _MANIFEST_PATH.exists():
+        return
+    with open(_MANIFEST_PATH) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            tid = row["id"]
+            if tid in TASKS:
+                continue  # don't overwrite hand-curated tasks
+            tags = row.get("all_tags", [])
+            primary = row.get("primary_tag", "")
+            TASKS[tid] = {
+                "id": tid,
+                "orig_id": row.get("orig_id", ""),
+                "title": f"{primary}: {row['instruction'][:60]}…",
+                "difficulty": _difficulty_for(primary),
+                "task_type": row.get("task_type", "MODIFY"),
+                "category": ", ".join(tags) if tags else primary,
+                "family": row.get("family", "xlsx"),
+                "split": row.get("split", "train"),
+                "primary_tag": primary,
+                "all_tags": tags,
+                "instruction": row["instruction"],
+                "constraints": row.get("constraints", ""),
+                "source_file": str(Path(__file__).parent / row["source_file"]),
+            }
+            if row.get("reference_file"):
+                TASKS[tid]["reference_file"] = str(Path(__file__).parent / row["reference_file"])
+            # Pass through the docx evaluator block, resolving expected_files
+            # to ABSOLUTE paths so the gold-stash dedup-by-string can match
+            # them against the (already absolute) reference_file.
+            if row.get("evaluator"):
+                ev = dict(row["evaluator"])
+                if ev.get("checks"):
+                    repo_root = Path(__file__).parent
+                    new_checks = []
+                    for c in ev["checks"]:
+                        nc = dict(c)
+                        nc["expected_files"] = [
+                            str(repo_root / f) if f and not Path(f).is_absolute() else f
+                            for f in (c.get("expected_files") or [])
+                        ]
+                        new_checks.append(nc)
+                    ev["checks"] = new_checks
+                TASKS[tid]["evaluator"] = ev
+
+
+_load_manifest()
+
+# ---------------------------------------------------------------------------
 # Helper accessors
 # ---------------------------------------------------------------------------
 
-TASK_IDS: List[str] = sorted(TASKS.keys(), key=lambda x: int(x.split("_")[1]))
+# Hand-curated tasks come first (sorted numerically), then manifest-loaded ones.
+def _sort_key(tid: str):
+    parts = tid.split("_")
+    if len(parts) == 2 and parts[1].isdigit():
+        return (0, int(parts[1]))  # task_<n>
+    return (1, tid)                # everything else (finch_<id>, osworld_<uuid>, …)
+
+
+TASK_IDS: List[str] = sorted(TASKS.keys(), key=_sort_key)
 
 
 def get_task(task_id: str) -> Dict[str, Any]:
     """Return a task dict by ID or raise KeyError."""
     if task_id not in TASKS:
         raise KeyError(
-            f"Unknown task_id '{task_id}'. Available: {', '.join(TASK_IDS)}"
+            f"Unknown task_id '{task_id}'. Available: {len(TASK_IDS)} tasks."
         )
     return TASKS[task_id]
 
 
-def list_tasks() -> List[Dict[str, str]]:
-    """Return a summary list of all tasks."""
-    return [
-        {
+def list_tasks(split: str | None = None, family: str | None = None) -> List[Dict[str, str]]:
+    """Return a summary list of tasks, optionally filtered by split or family."""
+    out = []
+    for tid in TASK_IDS:
+        t = TASKS[tid]
+        if split is not None and t.get("split", "train") != split:
+            continue
+        if family is not None and t.get("family", "xlsx") != family:
+            continue
+        out.append({
             "id": t["id"],
             "title": t["title"],
             "difficulty": t["difficulty"],
             "task_type": t["task_type"],
             "category": t["category"],
-        }
-        for t in (TASKS[tid] for tid in TASK_IDS)
-    ]
+            "family": t.get("family", "xlsx"),
+            "split": t.get("split", "train"),
+        })
+    return out
+
+
+def split_ids(split: str) -> List[str]:
+    """Return task IDs in a given split (train/eval).  Unmarked tasks count as train."""
+    return [tid for tid in TASK_IDS if TASKS[tid].get("split", "train") == split]
