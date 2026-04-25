@@ -1,5 +1,5 @@
 ---
-title: Financial Task Environment
+title: Office Document Task Environment
 emoji: 📊
 colorFrom: green
 colorTo: blue
@@ -11,273 +11,319 @@ tags:
   - openenv
   - agent-environment
   - rl-environment
+  - office
+  - excel
+  - word
+  - powerpoint
 ---
 
-# Financial Task Environment
+# Office Document Task Environment
 
 An [OpenEnv](https://github.com/meta-pytorch/OpenEnv) **code-execution
-environment** for training and evaluating AI agents on **real-world finance
-& accounting spreadsheet tasks**.  Agents write Python code (using
-`openpyxl`) to read, analyze, and modify authentic Excel workbooks from
-enterprise workflows.
+environment** for training and evaluating LLM agents on **real-world office
+document work** — Excel spreadsheets, Word documents, and PowerPoint decks.
+The agent writes Python code (`openpyxl` / `python-docx` / `python-pptx`)
+to read or modify authentic enterprise files, and gets graded by a
+**multi-layer, gaming-resistant** scoring stack.
 
-## Motivation
+> 119 tasks across 3 file formats. 22-task eval split. Real artifacts from
+> [Finch (FinWorkBench)](https://huggingface.co/datasets/FinWorkBench/Finch),
+> [OSWorld-Verified](https://github.com/xlang-ai/OSWorld), and
+> [PPTArena](https://github.com/michaelofengend/PPTArena). Multi-layer
+> grading: validity gate → structural diff → spec-aligned per-task evaluator.
 
-Finance professionals spend hundreds of hours on spreadsheet-centric tasks —
-extracting values, computing ratios, auditing formulas, entering data, building
-scenarios, and consolidating reports.  This environment provides 10 diverse
-tasks backed by real `.xlsx` files so agents can be trained and evaluated on
-the same kind of work.
+---
 
-## How It Works
+## The story (~30 sec read)
 
-1. **Reset** with a `task_id` → receive task instructions + xlsx file path + a
-   summary of the spreadsheet contents.
-2. **Execute code** (`action_type="code"`) → run Python code that reads or
-   modifies the xlsx.  The environment returns stdout/stderr.
-3. **Submit** a text answer (`action_type="submit"` for QA tasks) or a modified
-   file (`action_type="submit_file"` for MODIFY tasks).
-4. The environment **grades** the submission: QA answers are scored by numeric
-   matching + keyword overlap; MODIFY tasks are scored by cell-level comparison
-   against a reference workbook.
+**Problem.** Office workers spend hundreds of hours/year on spreadsheet, doc,
+and slide work. Current LLMs are tested on each format in isolation, in
+synthetic settings, with diff-based graders that an agent can game by
+copying the gold file. Nobody trains end-to-end across the three formats
+on real artifacts with proper anti-hacking defenses.
 
-## Tasks (10 total)
+**Environment.** The agent gets a real `.xlsx`/`.docx`/`.pptx`, an
+instruction in natural language, and a Python sandbox. It has 15 steps to
+read, modify, and submit the file. Per-step rewards measure *real file
+state* — did your code actually mutate the file? Did the file stay valid?
+Did its structural distance to the gold reference actually decrease? Final
+grade is a 2- or 3-layer composition: validity gate + structural diff +
+(for docx) the per-task evaluator from OSWorld.
 
-| # | Task ID | Title | Difficulty | Type | Category |
-|---|---------|-------|------------|------|----------|
-| 1 | `task_1` | Count Plants in Spreadsheet | Easy | QA | Calculation |
-| 2 | `task_2` | Retrieve TW EOL Charge | Easy | QA | Cross-sheet Retrieval |
-| 3 | `task_3` | Portfolio Mark-to-Market Change | Easy | QA | Calculation |
-| 4 | `task_4` | Summarize Pipeline Imbalances | Medium | MODIFY | Calculation |
-| 5 | `task_5` | Audit and Correct Formula Errors | Medium | MODIFY | Validation / Review |
-| 6 | `task_6` | Create Table and Apply Filter | Medium | MODIFY | Structuring / Formatting |
-| 7 | `task_7` | Add Weekday Row and Data Entry | Medium | MODIFY | Data Entry / Import |
-| 8 | `task_8` | Balance Sheet Validation & Indicators | Hard | MODIFY | Validation, Calculation |
-| 9 | `task_9` | Create Scenario3 Worksheet | Hard | MODIFY | Financial Modeling |
-| 10 | `task_10` | Consolidate by Type and Area | Hard | MODIFY | Multi-type |
+**Result you can reproduce today.** A frontier 270B-class model
+(MiniMax-M2.1) gets **0.390 avg / 41% success rate** on the 22-task eval.
+A small 3B trainable target (Qwen2.5-Coder-3B-Instruct) gets **0.002 avg
+/ 0% success**. That gap is the RL training story.
 
-### Difficulty Progression
+---
 
-- **Easy (3 tasks):** QA — read the spreadsheet and answer a question.
-- **Medium (4 tasks):** MODIFY — edit/augment the workbook (summaries, audits, formatting, data entry).
-- **Hard (3 tasks):** MODIFY — complex multi-sheet operations (validation, new scenario sheets, consolidation).
+## Hero results — 22-task eval split
 
-## Action & Observation Spaces
+| Model | Avg score | Success rate | xlsx (n=10) | docx (n=4) | pptx (n=8) |
+|---|---|---|---|---|---|
+| **MiniMaxAI/MiniMax-M2.1** (frontier baseline) | **0.390** | 41% | 0.293 | 0.445 | 0.485 |
+| **Qwen/Qwen2.5-Coder-3B-Instruct** (training target) | **0.002** | 0% | 0.003 | 0.001 | 0.003 |
+| **Qwen3-Coder-3B-RL** *(after SFT + GRPO — TBD)* | *coming* | *coming* | *coming* | *coming* | *coming* |
 
-### Action — `FinancialAction`
+Reproduce:
+
+```bash
+# MiniMax baseline
+python inference.py --split eval --model MiniMaxAI/MiniMax-M2.1 \
+  --output-dir runs/baseline_minimax_m21_eval
+
+# Qwen baseline
+python inference.py --split eval --model Qwen/Qwen2.5-Coder-3B-Instruct \
+  --output-dir runs/baseline_qwen25coder3b_eval
+```
+
+Per-task breakdown lives in `runs/<dir>/summary.csv` and full step-by-step
+trajectories in `runs/<dir>/trajectories/<task_id>.jsonl`.
+
+---
+
+## Task inventory (119 total)
+
+| Family | Source | Train | Eval | Total | What it tests |
+|---|---|---|---|---|---|
+| `xlsx` | Hand-curated (Round 1) | 10 | 0 | 10 | Diverse Finch tasks (QA + MODIFY) |
+| `xlsx` | [Finch](https://huggingface.co/datasets/FinWorkBench/Finch) | 40 | 10 | 50 | Stratified across 7 task-type tags |
+| `docx` | [OSWorld-Verified](https://github.com/xlang-ai/OSWorld) (libreoffice_writer) | 17 | 4 | 21 | 16 distinct evaluator functions ported from `desktop_env/evaluators/metrics/docs.py` |
+| `pptx` | [PPTArena](https://github.com/michaelofengend/PPTArena) | 30 | 8 | 38 | 16 distinct edit_types, including singletons (transitions, animations, A/V) |
+| **Total** | | **97** | **22** | **119** | |
+
+The 22-task eval set is stratified — at least 1 task per tag bucket — so the
+benchmark isn't biased toward one task type.
+
+---
+
+## How an episode works
+
+```
+reset(task_id="finch_10")
+  ↓ obs.task_description = "Per the headers and established formula logic, populate
+                            formulas for columns X through AH so the timing model's
+                            performance statistics for 2013–2025 are complete..."
+    obs.source_file = "/tmp/financial_env_finch_10_xxx/10_src_0.xlsx"
+    obs.family = "xlsx"
+
+step(action_type="code", content="...")     # 0–15 of these
+  ↓ subprocess runs the code, returns stdout/stderr
+  ↓ env measures: did the file change? is it still valid? did it move toward gold?
+  ↓ reward = 0.005–0.10 (dense process reward, see below)
+
+step(action_type="submit_file", content="<path>")   # ends episode
+  ↓ multi-layer grading
+  ↓ reward = 0.001–0.999 (final grade)
+```
+
+Three action types: `"code"` (Python), `"submit"` (text answer for QA tasks),
+`"submit_file"` (path to a modified file).
+
+---
+
+## Reward design
+
+This is the most opinionated part of the env, because the [judging guide](https://docs.google.com/document/d/1Odznuzwtb1ecDOm2t6ToZd4MuMXXfO6vWUGcxbC6mFs/edit)
+explicitly calls out reward hacking as a top failure mode. Two layers, both
+designed for *spec-aligned* signal.
+
+### Per-step process reward (6 components, capped at 0.10/step)
+
+Every code step gets scored across six independent signals, all measured
+from real file state — not regex on the agent's code:
+
+| Signal | Range | What it actually checks |
+|---|---|---|
+| `exec_health` | 0–0.020 | Subprocess exited 0; bonus if stdout non-empty |
+| `lib_engagement` | 0–0.010 | Code uses the family's expected library (`openpyxl` / `python-docx` / `python-pptx`) |
+| `mutation` | 0–0.030 | SHA-256 of the working file changed since last step |
+| `validity` | 0–0.020 | Mutated file still parses with the family's loader (no corruption) |
+| `progress` | 0–0.040 | Structural distance to gold *decreased* this step |
+| `eval_check` | 0–0.020 | Per-task evaluator score *increased* (docx-only currently) |
+
+`progress` and `eval_check` give RL a dense gradient *toward correctness*,
+not just "code ran". They're disabled at eval time (`FINANCIAL_ENV_PROGRESS=0`)
+to keep the benchmark honest.
+
+### Final grade (per family)
+
+| Family | Layer 1 (gate) | Layer 2 | Layer 3 |
+|---|---|---|---|
+| `xlsx` | — | 30% sheet-name match | 70% cell-level diff (2% numeric tolerance) |
+| `docx` | python-docx parse | 40% paragraph diff | 60% per-task OSWorld evaluator (`compare_docx_files`, `check_tabstops`, `is_first_line_centered`, `compare_line_spacing`, …) |
+| `pptx` | python-pptx parse | 20% slide-count | 80% avg per-shape composite: 40% text + 20% style + 20% position + 20% size |
+
+The `docx` 3rd layer is a port of OSWorld's [`metrics/docs.py`](https://github.com/xlang-ai/OSWorld/blob/main/desktop_env/evaluators/metrics/docs.py)
+(Apache-2.0). 16 evaluator functions, including compound `or` (multi-gold)
+and `and` (all-must-pass) checks. Single + compound normalized into a
+uniform `{conj, checks: [...]}` schema.
+
+### Anti-hacking defenses
+
+The env is built on the assumption that an agent will try to game the
+reward. Defenses (per [edits.md](edits.md) Phase 4):
+
+| Vector | Defense |
+|---|---|
+| Persistent globals | Each step is a fresh `subprocess.run` |
+| Time runaway | 30s subprocess timeout per step |
+| **Read the gold file from `data/`** | **At episode start, `move()` every gold file to `/tmp/oe_gold_<random>/` with generic names; restore on `close()`. The agent can't `glob('data/**/*Gold*')` for it.** |
+| Generic-distance gaming | `eval_check` rewards *spec-aligned* progress, not just diff-shrinkage |
+| `lib_engagement` regex gaming | Capped at 0.010/step — trivially bounded |
+| `mutation` spam (save garbage) | Capped, and the `progress`/`eval_check` signals dwarf it on real edits |
+
+Caveat: full sandbox isolation (bwrap / seccomp / read-only mount) is the
+right long-term answer; we ship the path-stash defense as a pragmatic v1.
+See [edits.md](edits.md) for the full audit.
+
+---
+
+## Action & Observation spaces
+
+### `FinancialAction`
 
 | Field | Type | Description |
-|-------|------|-------------|
-| `action_type` | `str` | `"code"` to execute Python, `"submit"` for text answer, `"submit_file"` for xlsx |
-| `content` | `str` | Python code, text answer, or file path |
+|---|---|---|
+| `action_type` | `str` | `"code"` (Python), `"submit"` (text), `"submit_file"` (path) |
+| `content` | `str` | Code, answer text, or absolute file path |
 
-### Observation — `FinancialObservation`
+### `FinancialObservation`
 
 | Field | Type | Description |
-|-------|------|-------------|
-| `task_id` | `str` | Current task identifier |
-| `task_description` | `str` | Full task instructions + xlsx summary |
-| `source_file` | `str` | Path to the working xlsx copy |
-| `difficulty` | `str` | `easy`, `medium`, or `hard` |
-| `task_type` | `str` | `QA` or `MODIFY` |
-| `feedback` | `str` | Code output or grading result |
-| `current_step` | `int` | Current step (max 15) |
-| `done` | `bool` | Whether the episode is finished |
-| `reward` | `float` | Reward for this step (0.0–1.0) |
+|---|---|---|
+| `task_id` | `str` | e.g. `finch_10`, `osworld_0a0faba3`, `pptarena_case_60_fix_text_placement` |
+| `task_description` | `str` | Instruction + constraints + source-file summary |
+| `source_file` | `str` | Path to the working file (already copied into a per-episode tmpdir) |
+| `task_type` | `str` | `"QA"` or `"MODIFY"` |
+| `feedback` | `str` | Stdout/stderr of code, or grading explanation. Includes the per-step reward decomposition for debugging. |
+| `current_step` / `max_steps` | `int` | 0–15 |
+| `done` | `bool` | Episode finished |
+| `reward` | `float` | Step or final reward, in (0.001, 0.999) |
 
-## Reward Design
+---
 
-| Action | Reward | Signal |
-|--------|--------|--------|
-| `code` (failed) | 0.005 | Penalized — syntax/runtime error |
-| `code` (simple) | ~0.02 | Minimal — just imports and a print |
-| `code` (exploration) | ~0.05 | Good — reading data, producing output |
-| `code` (modification + save) | ~0.06–0.10 | Best — actively editing the workbook |
-| `submit` / `submit_file` | 0.001–0.999 | Full grading against reference |
-| Max steps (15) | Episode ends | |
-
-Code step rewards are computed from:
-- **Execution success** — failed code gets only 0.005
-- **Substantive lines** — lines beyond imports/comments earn +0.002 each (up to +0.03)
-- **Output produced** — printing data earns +0.001 per line (up to +0.02)
-- **Save operations** — calling `.save()` earns +0.03 (agent is modifying the workbook)
-
-**QA grading:** Numeric extraction with 5% tolerance + keyword overlap.
-**MODIFY grading:** 30% sheet-name match + 70% cell-level comparison (2% numeric tolerance).
-
-All scores are clamped to the open interval (0.001, 0.999).
-
-## Setup & Usage
+## Setup & usage
 
 ### Prerequisites
 
 - Python 3.10+
-- Docker (for containerized deployment)
-- `pip install openenv-core openpyxl`
+- Docker (for HF Space deployment)
+- LLM API key (for `inference.py`)
 
-### Local Development
+### Local dev
 
 ```bash
 pip install -e ".[dev]"
-PYTHONPATH=. uvicorn server.app:app --host 0.0.0.0 --port 8000 --reload
+PYTHONPATH=. uvicorn server.app:app --host 0.0.0.0 --port 8000 \
+  --ws-ping-interval 600 --ws-ping-timeout 600 --reload
+```
+
+### Run a baseline
+
+```bash
+export HF_TOKEN="hf_..."
+python inference.py \
+  --split eval \
+  --model MiniMaxAI/MiniMax-M2.1 \
+  --api-base https://router.huggingface.co/v1 \
+  --env-url http://localhost:8000 \
+  --task-timeout 900
+```
+
+CLI flags worth knowing:
+- `--split {train,eval,all}` — manifest split
+- `--family {xlsx,docx,pptx,all}` — filter to one family
+- `--task-ids id1,id2,…` — explicit list (overrides split/family)
+- `--limit N` — cap number of tasks
+- `--resume` — merge new task results into an existing `--output-dir`
+  (useful for retrying flaky tasks without losing prior trajectories)
+
+Output lands at `runs/<timestamp>_<model_slug>/` with `results.json`,
+`summary.csv`, per-task `trajectories/*.jsonl`, and a mirrored `log.txt`.
+
+### Re-pull data from upstream sources
+
+```bash
+python data_pipeline/finch_pull.py            # 50 Finch xlsx tasks
+python data_pipeline/osworld_writer_pull.py   # 21 OSWorld docx tasks
+python data_pipeline/pptarena_pull.py --root /path/to/PPTArena-main   # 38 PPTArena pptx tasks
 ```
 
 ### Docker
 
 ```bash
-docker build -t financial-task-env:latest .
-docker run -p 8000:8000 financial-task-env:latest
+docker build -t office-task-env:latest .
+docker run -p 8000:8000 office-task-env:latest
 ```
 
-### Baseline Inference
+The provided [`Dockerfile`](Dockerfile) installs `openpyxl`, `python-docx`,
+`python-pptx`, `rapidfuzz`, and `Pillow`.
 
-```bash
-export API_BASE_URL="https://api.openai.com/v1"
-export MODEL_NAME="gpt-4o-mini"
-export HF_TOKEN="your-api-key"
-export ENV_URL="http://localhost:8000"
-python inference.py
-```
+---
 
-## Baseline Scores
-
-The environment includes 10 tasks, but the baseline inference runs 5 representative
-tasks (3 easy + 1 medium + 1 hard) to stay within the 20-minute runtime constraint.
-
-**Model:** `MiniMaxAI/MiniMax-M2.5` via HuggingFace Router
-
-| Task | Difficulty | Type | Score | Step Rewards |
-|------|------------|------|-------|-------------|
-| task_1 — Count Plants | Easy | QA | 0.001 | 0.05, 0.06, 0.06, 0.06, 0.00 |
-| task_2 — Retrieve EOL Charge | Easy | QA | 0.001 | 0.04, 0.01, 0.07, 0.06, 0.02, 0.00 |
-| task_3 — Portfolio MTM Change | Easy | QA | 0.367 | 0.06, 0.01, 0.07, ..., 0.37 |
-| task_5 — Audit Formulas | Medium | MODIFY | **0.958** | 0.07, 0.01, 0.07, ..., 0.96 |
-| task_8 — Balance Sheet Validation | Hard | MODIFY | 0.001 | 0.06, 0.01, 0.06, ..., 0.05 |
-| **Average** | | | **0.266** | |
-
-**Runtime:** 12 min 10 sec (limit: 20 min) · **Server memory:** ~40 MB (limit: 8 GB)
-
-Note: Step rewards vary based on code quality — failed code gets 0.005, exploration
-~0.05, modification+save ~0.06–0.10.
-
-### Run 2 — `google/gemma-4-26B-A4B-it`
-
-| Task | Difficulty | Type | Score |
-|------|------------|------|-------|
-| task_1 — Count Plants | Easy | QA | 0.001 |
-| task_2 — Retrieve EOL Charge | Easy | QA | **0.999** |
-| task_3 — Portfolio MTM Change | Easy | QA | 0.001 |
-| task_5 — Audit Formulas | Medium | MODIFY | 0.001 |
-| task_8 — Balance Sheet Validation | Hard | MODIFY | 0.001 |
-| **Average** | | | **0.201** |
-
-**Runtime:** 19 min 27 sec (limit: 20 min) · **Server memory:** ~40 MB
-
-Gemma 4 26B solved task_2 perfectly in just 2 steps but timed out on more
-complex tasks due to longer generation times.
-
-### Run 3 — `Qwen/Qwen3.5-122B-A10B`
-
-| Task | Difficulty | Type | Score |
-|------|------------|------|-------|
-| task_1 — Count Plants | Easy | QA | 0.001 |
-| task_2 — Retrieve EOL Charge | Easy | QA | **0.999** |
-| task_3 — Portfolio MTM Change | Easy | QA | 0.001 |
-| task_5 — Audit Formulas | Medium | MODIFY | 0.001 |
-| task_8 — Balance Sheet Validation | Hard | MODIFY | 0.001 |
-| **Average** | | | **0.201** |
-
-**Runtime:** 2 min 11 sec · Fast inference but hit per-task timeout on complex tasks.
-
-### Run 4 — `deepseek-ai/DeepSeek-R1`
-
-| Task | Difficulty | Type | Score |
-|------|------------|------|-------|
-| task_1 — Count Plants | Easy | QA | 0.001 |
-| task_2 — Retrieve EOL Charge | Easy | QA | 0.001 |
-| task_3 — Portfolio MTM Change | Easy | QA | 0.001 |
-| task_5 — Audit Formulas | Medium | MODIFY | 0.001 |
-| task_8 — Balance Sheet Validation | Hard | MODIFY | 0.001 |
-| **Average** | | | **0.001** |
-
-**Runtime:** 11 min 57 sec · DeepSeek-R1's long chain-of-thought reasoning consumed
-most of the output tokens, leaving answers that didn't parse correctly.
-
-### Run 5 — `MiniMaxAI/MiniMax-M2.1` (Best)
-
-| Task | Difficulty | Type | Score | Steps |
-|------|------------|------|-------|-------|
-| task_1 — Count Plants | Easy | QA | 0.001 | 5 |
-| task_2 — Retrieve EOL Charge | Easy | QA | **0.999** | 4 |
-| task_3 — Portfolio MTM Change | Easy | QA | 0.001 | 10 |
-| task_5 — Audit Formulas | Medium | MODIFY | **0.958** | 4 |
-| task_8 — Balance Sheet Validation | Hard | MODIFY | **0.733** | 10 |
-| **Average** | | | **0.538** | |
-
-**Runtime:** 3 min 18 sec · Best overall performance — solved 3/5 tasks with high
-scores including the hard MODIFY task (0.733). Fast and efficient.
-
-### Model Comparison Summary
-
-| Model | Avg Score | Runtime | Best Task |
-|-------|-----------|---------|-----------|
-| **MiniMax-M2.1** | **0.538** | **3m 18s** | task_5: 0.958, task_8: 0.733 |
-| MiniMax-M2.5 | 0.266 | 12m 10s | task_5: 0.958 |
-| Gemma 4 26B | 0.201 | 19m 27s | task_2: 0.999 |
-| Qwen 3.5 122B | 0.201 | 2m 11s | task_2: 0.999 |
-| DeepSeek-R1 | 0.001 | 11m 57s | — |
-
-## Project Structure
+## Project structure
 
 ```
-financial_task_env/
-├── __init__.py              # Module exports
-├── models.py                # FinancialAction & FinancialObservation
-├── tasks.py                 # 10 task definitions + xlsx paths
-├── graders.py               # QA grading + xlsx cell comparison
-├── client.py                # FinancialTaskEnv (EnvClient)
-├── inference.py             # Baseline inference script
-├── openenv.yaml             # OpenEnv manifest
-├── pyproject.toml           # Dependencies
-├── Dockerfile               # Container image
-├── data/                    # xlsx source & reference files
-│   ├── 0/                   # Balance sheet validation
-│   ├── 21/                  # Data entry
-│   ├── 24/                  # Scenario modeling
-│   ├── 34/                  # Portfolio calculation
-│   ├── 35/                  # Pipeline imbalances
-│   ├── 40/                  # Formula audit
-│   ├── 60/                  # Table formatting
-│   ├── 67/                  # Consolidation
-│   ├── 118/                 # Value retrieval
-│   └── 119/                 # Plant counting
-└── server/
-    ├── __init__.py
-    ├── financial_environment.py  # Code-execution environment
-    ├── app.py                    # FastAPI application
-    └── Dockerfile
+.
+├── data/
+│   ├── manifest.jsonl                 # 109 rows: 50 Finch + 21 OSWorld + 38 PPTArena
+│   ├── 0/, 21/, …                     # 10 hand-curated xlsx tasks
+│   ├── finch_50/<id>/{src,ref}.xlsx
+│   ├── osworld_writer/<uuid>/<src + N gold>.docx
+│   └── pptarena/<slug>/{src,ref}.pptx
+├── data_pipeline/                     # Pullers for each upstream dataset
+├── graders/
+│   ├── __init__.py                    # grade_xlsx + grade_docx + grade_pptx
+│   └── docx_metrics.py                # 16 ported OSWorld evaluators
+├── server/
+│   ├── financial_environment.py       # OpenEnv environment + gold-stash
+│   └── app.py                         # FastAPI + WebSocket
+├── rewards.py                         # 6-component RewardTracker
+├── tasks.py                           # Manifest loader + helpers
+├── inference.py                       # Baseline runner with --split / --family / --resume
+├── runs/                              # Baseline & training-run results
+└── edits.md                           # Full Round-1 → Round-2 change log
 ```
 
-## Environment Description
+---
 
-This environment models real financial spreadsheet work:
+## What's next (training pipeline — in progress)
 
-- **Data extraction** — read values from complex multi-sheet workbooks
-- **Calculation** — compute portfolio changes, imbalances, indicators
-- **Validation** — audit and fix formula errors in workbooks
-- **Data entry** — add rows, enter values, format new columns
-- **Structuring** — create tables, apply filters, build new worksheets
-- **Financial modeling** — replicate scenario sheets with new parameters
-- **Consolidation** — aggregate data across sheets into summary views
+Per the budget plan in [edits.md](edits.md) (~$45 on HF Jobs):
 
-Each task uses a genuine enterprise Excel workbook.  MODIFY tasks are graded
-by spreadsheet properties comparison against a reference workbook.
+1. Run a teacher (Claude Haiku 4.5) on the 97 train tasks, filter by score
+2. SFT-warm-start `Qwen2.5-Coder-3B-Instruct` with LoRA on filtered trajectories (Unsloth, ~$10 on 1× A100 80GB)
+3. GRPO continued training with rollouts hitting this env in-process (~$30, 12h on the same GPU)
+4. Re-eval on the 22-task split → before/after plot
+
+The trajectory persistence in `runs/<dir>/trajectories/*.jsonl` doubles as
+the SFT corpus format — `(messages, completion)` pairs ready for
+`SFTTrainer`.
+
+---
+
+## Round-1 → Round-2 change log
+
+The full journey from the original 10-task xlsx-only env to today's
+3-format / 119-task / multi-layer-graded env is documented in
+[`edits.md`](edits.md): manifest loader, RewardTracker, OSWorld docx port,
+PPTArena ingest, layout+style-aware pptx grader, gold-stash hardening,
+inference v2.
+
+---
 
 ## Acknowledgments
 
-The spreadsheet tasks and reference workbooks used in this environment are
-sourced from the **FinWorkBench (Finch)** dataset. If you use this environment
-in your research, please cite:
+- **Finch / FinWorkBench** ([dataset](https://huggingface.co/datasets/FinWorkBench/Finch),
+  [paper](https://arxiv.org/abs/2512.13168)) — the xlsx tasks
+- **OSWorld-Verified** ([repo](https://github.com/xlang-ai/OSWorld)) — the
+  docx tasks and the evaluator functions in `graders/docx_metrics.py` (Apache-2.0)
+- **PPTArena** ([repo](https://github.com/michaelofengend/PPTArena)) — the
+  pptx tasks and the `evaluation_pairs_refined.json` schema
+- **OpenEnv / Meta PyTorch** ([repo](https://github.com/meta-pytorch/OpenEnv)) — the host framework
+
+If you use this environment in research, please cite the upstream datasets:
 
 ```bibtex
 @article{dong2025finch,
