@@ -150,6 +150,244 @@ def _per_run_plot(run: str) -> Optional[str]:
 
 
 # ---------------------------------------------------------------------------
+# Trajectory replay — find Kimi's best run per family, render step-by-step
+# with reward decomposition explained.
+# ---------------------------------------------------------------------------
+
+import csv  # noqa: E402
+import re   # noqa: E402
+
+REWARD_EXPLANATIONS = {
+    "exec_health":    "Subprocess returned 0; bonus for non-empty stdout",
+    "lib_engagement": "Code uses the family's expected library (openpyxl / python-docx / python-pptx)",
+    "mutation":       "Working file's SHA-256 changed since last step (real edit, not just a re-save)",
+    "validity":       "Mutated file still parses with the family's loader (no corruption)",
+    "progress":       "Structural distance to the gold reference decreased",
+    "eval_check":     "Per-task evaluator score went up (docx-only — runs the OSWorld check function)",
+}
+
+REWARD_LINE_RE = re.compile(r"Reward:\s*total=([\d.]+)\s*\((.*?)\)")
+
+
+def _parse_reward_components(feedback: str) -> Tuple[Optional[float], Dict[str, float]]:
+    m = REWARD_LINE_RE.search(feedback or "")
+    if not m:
+        return None, {}
+    total = float(m.group(1))
+    comps: Dict[str, float] = {}
+    for kv in m.group(2).split(","):
+        kv = kv.strip()
+        if "=" in kv:
+            k, v = kv.split("=", 1)
+            try:
+                comps[k.strip()] = float(v.strip())
+            except ValueError:
+                pass
+    return total, comps
+
+
+def _strip_reward_block(feedback: str) -> str:
+    """Remove the 'Reward: total=...' tail from a feedback string so we can
+    render the env's actual stdout/stderr separately from the breakdown."""
+    if not feedback:
+        return ""
+    idx = feedback.find("\n\nReward: total=")
+    if idx == -1:
+        idx = feedback.find("Reward: total=")
+    if idx == -1:
+        return feedback
+    return feedback[:idx].rstrip()
+
+
+def _find_best_kimi_per_family() -> Dict[str, Dict[str, Any]]:
+    """Top Kimi-K2.5 score per family from the training-set teacher run.
+    Returns {family: {task_id, score, primary_tag, instruction}}."""
+    teacher_dir = RUNS_DIR / "teacher_kimi_k25_train"
+    summary = teacher_dir / "summary.csv"
+    if not summary.exists():
+        return {}
+
+    best: Dict[str, Tuple[float, str, str]] = {}
+    with open(summary) as f:
+        for row in csv.DictReader(f):
+            if row.get("error"):
+                continue
+            fam = row.get("family", "")
+            try:
+                score = float(row.get("score", 0))
+            except ValueError:
+                continue
+            if score > best.get(fam, (0.0,))[0]:
+                best[fam] = (score, row["task_id"], row.get("primary_tag", ""))
+
+    # Pull the instruction text from the manifest so we can show what the
+    # task actually asked for.
+    manifest_path = REPO_ROOT / "data" / "manifest.jsonl"
+    instruction_by_id: Dict[str, str] = {}
+    if manifest_path.exists():
+        for line in manifest_path.read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+                instruction_by_id[row["id"]] = row.get("instruction", "")
+            except Exception:
+                pass
+
+    out = {}
+    for fam, (score, tid, tag) in best.items():
+        out[fam] = {
+            "task_id": tid,
+            "score": score,
+            "primary_tag": tag,
+            "instruction": instruction_by_id.get(tid, ""),
+        }
+    return out
+
+
+def _load_trajectory(task_id: str, run_dir_name: str = "teacher_kimi_k25_train") -> List[Dict[str, Any]]:
+    p = RUNS_DIR / run_dir_name / "trajectories" / f"{task_id}.jsonl"
+    if not p.exists():
+        return []
+    return [json.loads(l) for l in p.read_text().splitlines() if l.strip()]
+
+
+def _render_step_html(step: Dict[str, Any], step_idx: int) -> str:
+    """Pretty-print a single step: action + env stdout + reward breakdown."""
+    action_type = step.get("action_type", "")
+    action_content = step.get("action_content", "")
+    feedback = step.get("feedback", "") or ""
+    reward = float(step.get("reward") or 0)
+    done = step.get("done", False)
+
+    total, comps = _parse_reward_components(feedback)
+    body_feedback = _strip_reward_block(feedback)
+    if len(action_content) > 2400:
+        action_content = action_content[:2400] + "\n# … (truncated for display)"
+    if len(body_feedback) > 2000:
+        body_feedback = body_feedback[:2000] + "\n... (truncated for display)"
+
+    # Reward-breakdown table for code steps; final-grade callout for submits.
+    if comps:
+        rows_html = ""
+        for key, val in comps.items():
+            checkmark = "✅" if val > 0 else "—"
+            why = REWARD_EXPLANATIONS.get(key, "")
+            rows_html += (
+                f'<tr>'
+                f'<td style="text-align:center;width:30px">{checkmark}</td>'
+                f'<td><code>{key}</code></td>'
+                f'<td style="text-align:right;font-variant-numeric:tabular-nums">'
+                f'{val:.3f}</td>'
+                f'<td style="color:#64748b;font-size:.88em">{why}</td>'
+                f'</tr>'
+            )
+        breakdown_html = (
+            '<table style="width:100%;border-collapse:collapse;margin-top:.5rem">'
+            '<thead><tr style="border-bottom:1px solid #e5e7eb">'
+            '<th></th><th style="text-align:left">component</th>'
+            '<th style="text-align:right">value</th>'
+            '<th style="text-align:left;color:#64748b;font-weight:500">why this fired</th>'
+            f'</tr></thead><tbody>{rows_html}'
+            '<tr style="border-top:1px solid #e5e7eb;font-weight:600">'
+            '<td></td><td>total (capped at 0.10)</td>'
+            f'<td style="text-align:right">{total:.3f}</td><td></td></tr>'
+            '</tbody></table>'
+        )
+    else:
+        breakdown_html = (
+            '<div style="padding:.5rem .75rem;background:#fef3c7;'
+            'border-left:3px solid #d97706;margin-top:.5rem">'
+            f'<strong>Final grade: {reward:.3f}</strong> — '
+            "computed by the family's grade_xxx() function "
+            '(validity gate + diff + per-task evaluator).'
+            '</div>'
+        )
+
+    action_color = {
+        "code": "#2563eb",
+        "submit": "#059669",
+        "submit_file": "#059669",
+    }.get(action_type, "#64748b")
+    done_badge = (
+        '<span style="background:#10b981;color:white;padding:.1rem .4rem;'
+        'border-radius:.25rem;font-size:.7em;margin-left:.4rem">DONE</span>'
+        if done else ''
+    )
+
+    # Pre-build the chunks that involve quotes / backslashes so the f-string
+    # below stays simple (Python 3.10 disallows backslashes in f-string exprs).
+    action_html = _html_escape(action_content)
+    feedback_html = (
+        _html_escape(body_feedback) if body_feedback
+        else '<em style="color:#9ca3af">(no output)</em>'
+    )
+
+    return f"""
+<div style="border:1px solid #e5e7eb;border-radius:6px;padding:1rem;margin-bottom:1rem;background:white">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+    <strong>Step {step_idx}</strong>
+    <div>
+      <span style="color:{action_color};font-family:monospace;font-size:.9em">
+        action_type=&quot;{action_type}&quot;</span>
+      {done_badge}
+      <span style="margin-left:1rem;color:#64748b">reward = <strong>{reward:.3f}</strong></span>
+    </div>
+  </div>
+
+  <div style="color:#64748b;font-size:.85em;margin-top:.7rem">Agent action:</div>
+  <pre style="background:#1f2937;color:#e5e7eb;padding:.75rem;border-radius:4px;
+              overflow-x:auto;font-size:.82rem;margin:.3rem 0;max-height:300px">{action_html}</pre>
+
+  <div style="color:#64748b;font-size:.85em;margin-top:.7rem">Env feedback:</div>
+  <pre style="background:#f3f4f6;color:#1f2937;padding:.75rem;border-radius:4px;
+              overflow-x:auto;font-size:.82rem;margin:.3rem 0;max-height:200px">{feedback_html}</pre>
+
+  {breakdown_html}
+</div>
+"""
+
+
+def _html_escape(s: str) -> str:
+    return (s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+             .replace('"', "&quot;").replace("'", "&#39;"))
+
+
+def _render_replay_section(family: str, info: Dict[str, Any]) -> str:
+    """Full replay HTML block for one family's best Kimi run."""
+    task_id = info["task_id"]
+    score = info["score"]
+    tag = info["primary_tag"]
+    instruction = info["instruction"]
+    traj = _load_trajectory(task_id)
+    if not traj:
+        return f'<p class="muted">No trajectory available for {task_id}.</p>'
+
+    fam_label = {"xlsx": "Excel", "docx": "Word", "pptx": "PowerPoint"}.get(family, family)
+    header = f"""
+<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;
+            padding:1rem;margin-bottom:1rem">
+  <div style="display:flex;justify-content:space-between">
+    <div>
+      <strong>📄 {fam_label} ({family})</strong> · task <code>{task_id}</code>
+      <span style="color:#64748b">· {tag}</span>
+    </div>
+    <div><strong>Final score: {score:.3f}</strong> · {len(traj)} steps</div>
+  </div>
+  <div style="color:#475569;font-size:.92em;margin-top:.5rem">
+    <strong>Instruction:</strong> {_html_escape(instruction[:600])}
+    {"..." if len(instruction) > 600 else ""}
+  </div>
+</div>
+"""
+    steps_html = ""
+    for i, step in enumerate(traj, start=1):
+        steps_html += _render_step_html(step, i)
+    return header + steps_html
+
+
+# ---------------------------------------------------------------------------
 # File upload handler
 # ---------------------------------------------------------------------------
 
@@ -363,6 +601,29 @@ def build_dashboard() -> gr.Blocks:
         # ---- Trajectory pipeline ----
         gr.Markdown("## Trajectory collection pipeline")
         gr.Markdown(PIPELINE_MD)
+
+        # ---- Replay: see Kimi solve a task ----
+        gr.Markdown("## 🎬 Replay — see Kimi-K2.5 solve a task end-to-end")
+        gr.Markdown(
+            "Below: Kimi-K2.5's **best run per file family** from the training "
+            "set, replayed step by step. Each step shows the agent's code, the "
+            "env's stdout/stderr, and the per-component reward decomposition "
+            "with explanations of *why* each component fired. Final score for "
+            "all three: **0.999** — the env grader's near-max."
+        )
+        best = _find_best_kimi_per_family()
+        # Order: xlsx → docx → pptx (story flows from simplest format to richest)
+        for fam in ["xlsx", "docx", "pptx"]:
+            info = best.get(fam)
+            if not info:
+                continue
+            fam_label = {"xlsx": "Excel (xlsx)", "docx": "Word (docx)",
+                         "pptx": "PowerPoint (pptx)"}[fam]
+            with gr.Accordion(
+                f"{fam_label} — task {info['task_id']} (score {info['score']:.3f})",
+                open=(fam == "docx"),  # default-open the shortest one
+            ):
+                gr.HTML(_render_replay_section(fam, info))
 
         # ---- File upload demo ----
         gr.Markdown("## 🗂️ Try your own task")
