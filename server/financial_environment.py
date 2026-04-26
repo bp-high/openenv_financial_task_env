@@ -31,13 +31,6 @@ from graders import grade_task
 from rewards import RewardTracker
 
 
-# OpenEnv concurrency support — each WebSocket session gets its own
-# FinancialEnvironment instance.  Per-instance state (workdir, gold stash,
-# code-step counter) is fully session-isolated; gold-stash naming uses
-# uuid4-randomized tmpdirs that won't collide.
-SUPPORTS_CONCURRENT_SESSIONS: bool = True
-
-
 class FinancialEnvironment(Environment):
     """OpenEnv environment for financial spreadsheet tasks with code execution.
 
@@ -51,6 +44,14 @@ class FinancialEnvironment(Environment):
 
     The episode also ends when *max_steps* is reached.
     """
+
+    # OpenEnv concurrency support — each WebSocket session gets its own
+    # FinancialEnvironment instance.  Per-instance state (workdir, gold stash,
+    # code-step counter) is fully session-isolated; gold-stash naming uses
+    # uuid4-randomized tmpdirs that won't collide.  Required as a CLASS
+    # attribute (not module-level) — openenv's _validate_concurrency_safety
+    # does getattr(env_cls, "SUPPORTS_CONCURRENT_SESSIONS", False).
+    SUPPORTS_CONCURRENT_SESSIONS = True
 
     MAX_STEPS = 15
 
