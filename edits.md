@@ -1172,6 +1172,141 @@ openenv_financial_task_env/
 
 ---
 
+## Phase 13 — GRPO rollout fix: custom `rollout_func` for markdown JSON tool calls
+
+**Symptom:** First GRPO run started with `environment_factory=OfficeDocumentEnv`
+showed reward stuck at 0.0 across every step in Trackio.  Captured a
+completion sample mid-run and confirmed the model was emitting:
+
+```
+```json
+{"name": "run_python_code", "arguments": {"code": "..."}}
+```
+```
+
+…but TRL's `environment_factory` path runs `add_response_schema(tokenizer)` →
+`qwen3_schema`, whose regex only matches `<tool_call>...</tool_call>` XML.
+The parser found 0 tool calls per completion, the env never received a
+step, reward stayed 0, advantage was 0, and gradient flow through the
+model was effectively zero.  ~5 min of A100 time burned learning nothing.
+
+**Root cause:** the SFT'd model (`bpHigh/qwen3b-office-sft-kimi`) was
+trained on 53 Kimi-K2.5 trajectories where the assistant emits markdown
+JSON blocks.  The SFT overwrote Qwen2.5-Coder's native `<tool_call>` XML
+behavior.  TRL's tool-call parser is hardcoded to one of five known
+schemas (glm4, gptoss, llama3, qwen3, qwen3_5) — none of which match
+markdown blocks.
+
+### Fix: bypass the parser by writing our own rollout
+
+Switched `train_grpo.py` from `environment_factory=OfficeDocumentEnv` to
+`rollout_func=rollout_func`.  TRL's two rollout paths:
+
+| Mode | Who drives the loop | Tool-call format | Used here? |
+|---|---|---|---|
+| `environment_factory` | TRL's internal parser | `<tool_call>...</tool_call>` XML only | ❌ broken for our SFT model |
+| `rollout_func` | User callback | Anything you want — you parse it | ✅ |
+
+### New `rollout_func(prompts, trainer)` — ~150 LOC in [`train_grpo.py`](train_grpo.py)
+
+For each `prompt × num_generations`:
+
+1. Spawn an `OfficeDocumentEnv` and reset it with the task's `task_id`
+   (recovered from a `<task_id:...>` marker we now embed in the user
+   prompt — TRL doesn't pass dataset columns to `rollout_func`).
+2. Apply the chat template to the initial `[system, user]` messages,
+   tokenize → `prompt_ids`.
+3. Loop up to 12 turns:
+   a. Batch-call `trainer.vllm_generation.generate()` for every alive
+      rollout in parallel (one generation per rollout per turn).
+   b. Decode each completion → text.
+   c. Parse via `parse_tool_call(text)`:
+      - First try ```` ```json {"name": ..., "arguments": ...} ``` ````
+        (primary SFT format).
+      - Fall back to ```` ```python ... ``` ```` → `run_python_code`.
+      - Fall back to Kimi K2.5 `<|tool_call_begin|>` markers.
+   d. Dispatch to `env.run_python_code` / `env.submit_file` /
+      `env.submit_text_answer`.
+   e. Tokenize the env feedback as a user-message wire format
+      (chat-template diff: `tok.apply_chat_template(after) − before`),
+      append to `completion_ids` with `logprob=0` and `env_mask=0`.
+4. After loop, return per-rollout:
+   - `prompt_ids`, `completion_ids`, `logprobs`, `env_mask`
+   - `env_reward_value` (extra field) — TRL forwards this as a kwarg
+     to the reward function
+
+### Reward function update
+
+Old: `def env_reward(environments, **kwargs)` — read from TRL-managed env
+instances.
+
+New: `def env_reward(prompts=None, completions=None, env_reward_value=None, **kwargs)`
+— read directly from the extra field returned by `rollout_func`.
+
+### Why `env_mask` matters
+
+The `env_mask` field tells TRL "these tokens are NOT model-emitted, don't
+flow loss through them."  Without it, GRPO would compute loss on env
+feedback tokens too, which is meaningless (the model didn't pick those
+tokens — the env did).
+
+### Modified files
+
+- [`train_grpo.py`](train_grpo.py):
+  - SYSTEM_PROMPT rewritten to instruct the model in its native markdown
+    JSON format (not XML).
+  - User prompt now prefixes `<task_id:NAME>\n\n` so `rollout_func` can
+    recover task identity.
+  - Added `parse_tool_call(text) -> dict | None` — three-format parser.
+  - Added `rollout_func(prompts, trainer) -> dict` — the new rollout.
+  - Removed `tokenizer.response_schema = qwen3_schema` (no longer
+    needed — we don't go through TRL's parser).
+  - Removed `max_tool_calling_iterations` from `GRPOConfig` (we cap
+    turns ourselves at 12).
+  - GRPOTrainer constructor: `environment_factory=...` → `rollout_func=...`.
+
+### Files unchanged in Phase 13
+
+- [`server/financial_environment.py`](server/financial_environment.py)
+- [`server/app.py`](server/app.py)
+- [`client.py`](client.py)
+- All SFT artifacts and dashboard code
+
+The env-side concurrent-session work from the prior commits
+(`SUPPORTS_CONCURRENT_SESSIONS=True`, `max_concurrent_envs=16`,
+`FINANCIAL_ENV_GOLD_STASH=copy`) is still required — `rollout_func`
+opens batch_size × num_generations env sessions in parallel within each
+gradient step.
+
+### Risks / things to watch
+
+1. **Token alignment fragility**: tokenizing the env-feedback "wire
+   format" via a chat-template diff assumes the template doesn't insert
+   anything weird mid-conversation.  If Qwen2.5-Coder's template ever
+   changes, the diff approach could mis-attribute boundary tokens.
+   Mitigation: print sample completions from the first training step
+   and verify env_mask boundaries by hand.
+
+2. **Concurrency on the env Space**: with `num_generations=2` and
+   `gradient_accumulation_steps=8`, each gradient step opens 16 env
+   sessions in parallel — exactly at the Space's `max_concurrent_envs=16`
+   limit.  If we bump `num_generations` to 4, also bump
+   `max_concurrent_envs` to 32.
+
+3. **Per-turn cap of 1024 tokens**: `_ROLLOUT_MAX_TOKENS_PER_TURN` was
+   chosen for safety, but if the model wants to emit a long python block
+   it gets truncated.  Tune up if we see long-code tasks failing.
+
+### Trackio run hygiene
+
+The first (failed) GRPO run logged `office-doc-grpo` to
+`bpHigh/trackio-office-grpo`.  Renamed/archived rather than deleted —
+it's evidence of the parser-format mismatch.  The post-fix run logs to
+the same project name; the failed run is suffixed `-attempt1` for
+provenance.
+
+---
+
 ## Re-deploy checklist
 
 If a fresh contributor wants to reproduce the current state from
