@@ -1,0 +1,23 @@
+task_id,family,primary_tag,split,score,success,steps,elapsed_s,error
+osworld_0a0faba3,docx,check_tabstops,eval,0.999,True,3,12.96,
+osworld_0b17a146,docx,compare_docx_files,eval,0.999,True,6,141.4,
+osworld_66399b0d,docx,compare_docx_tables,eval,0.999,True,4,7.48,
+osworld_0810415c,docx,compare_line_spacing,eval,0.4,False,1,3.1,
+pptarena_case_60_fix_text_placement,pptx,"Alignment, Distribution & Z-order",eval,0.9879,True,5,47.81,
+pptarena_case_7_update_quarter_two_data_b,pptx,Charts,eval,0.9534,True,14,38.47,
+pptarena_case_36_add_speaker_notes,pptx,Slide/Section Management & Footers,eval,0.999,True,7,19.95,
+pptarena_case_35_structural_fix,pptx,Text & Typography,eval,0.001,False,1,7.0,empty_response
+pptarena_case_40_hindu_center_titles,pptx,Text & Typography,eval,0.999,True,11,49.46,
+finch_112,xlsx,Cross-sheet/file Retrieval,eval,0.9326,True,9,39.12,
+finch_14,xlsx,Financial Modeling,eval,0.001,False,3,11.63,empty_response
+finch_168,xlsx,Structuring / Formatting,eval,0.03,False,15,38.11,
+finch_10,xlsx,Calculation,eval,0.08,False,15,122.8,
+finch_35,xlsx,Calculation,eval,0.03,False,15,31.75,
+finch_38,xlsx,Calculation,eval,0.03,False,15,65.13,
+finch_154,xlsx,Data Entry / Import,eval,0.001,False,8,37.09,
+finch_59,xlsx,Structuring / Formatting,eval,0.03,False,15,44.69,
+finch_122,xlsx,Summary / Visualization,eval,0.001,False,13,30.01,empty_response
+finch_158,xlsx,Validation / Review,eval,0.03,False,15,87.59,
+pptarena_case_32_arrange_image_and_text,pptx,Images & Pictures,eval,0.001,False,1,13.2,
+pptarena_case_49_normalize_thousand_separators,pptx,Tables,eval,0.001,False,1,11.25,
+pptarena_case_26_match_slide_colors_to_theme,pptx,Theme & Background,eval,0.9771,True,4,11.5,

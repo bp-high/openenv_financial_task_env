@@ -1,0 +1,1 @@
+{"step": 1, "action_type": "submit_file", "action_content": "/var/folders/ff/24w7wvwj09jcc5jk_ch8rk6r0000gn/T/financial_env_osworld_0810415c_anm5gf3q/Novels_Intro_Packet.docx", "reward": 0.4, "done": true, "feedback": "File graded. Score: 0.40/1.00 \u2014 Partial.\nCumulative reward: 0.40"}
