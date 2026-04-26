@@ -123,10 +123,23 @@ def main() -> int:
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # ---- 3. Model ----
+    # ---- 3. Precision detection ----
+    # bf16 is strictly better than fp16 when available (Ampere+ CUDA, M-series
+    # MPS).  fp16 requires a grad scaler that needs PyTorch >= 2.8 on MPS, so
+    # we drop fp16 entirely — fall back to fp32 on old hardware.
+    bf16_ok = (
+        (torch.cuda.is_available() and torch.cuda.is_bf16_supported())
+        or (hasattr(torch.backends, "mps") and torch.backends.mps.is_available())
+    )
+    compute_dtype = torch.bfloat16 if bf16_ok else torch.float32
+
+    # ---- 4. Model ----
     print(f"Loading base model: {args.base_model}")
+    print(f"  precision: {'bf16' if bf16_ok else 'fp32'}  "
+          f"(cuda={torch.cuda.is_available()}, "
+          f"mps={hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()})")
     model_kwargs = dict(
-        torch_dtype=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
+        torch_dtype=compute_dtype,
         attn_implementation="sdpa",
     )
     if args.use_qlora:
@@ -143,7 +156,7 @@ def main() -> int:
     if hasattr(model, "config"):
         model.config.use_cache = False  # required for grad checkpointing
 
-    # ---- 4. LoRA ----
+    # ---- 5. LoRA ----
     target = args.target_modules
     if target != "all-linear" and "," in target:
         target = [t.strip() for t in target.split(",")]
@@ -156,7 +169,7 @@ def main() -> int:
         bias="none",
     )
 
-    # ---- 5. Trainer config ----
+    # ---- 6. Trainer config ----
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -171,8 +184,8 @@ def main() -> int:
         save_steps=args.save_steps,
         save_strategy="steps",
         save_total_limit=2,
-        bf16=torch.cuda.is_bf16_supported(),
-        fp16=not torch.cuda.is_bf16_supported(),
+        bf16=bf16_ok,
+        fp16=False,  # fp16 needs a grad scaler that doesn't play nice with MPS
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
         max_length=args.max_seq_len,
@@ -192,7 +205,7 @@ def main() -> int:
         dataset_kwargs={"skip_prepare_dataset": False},
     )
 
-    # ---- 6. Train ----
+    # ---- 7. Train ----
     print("\nStarting SFTTrainer...")
     trainer = SFTTrainer(
         model=model,
@@ -204,7 +217,7 @@ def main() -> int:
 
     trainer.train()
 
-    # ---- 7. Save ----
+    # ---- 8. Save ----
     print(f"\nSaving final LoRA adapter to {out_dir}")
     trainer.save_model(str(out_dir))
     tokenizer.save_pretrained(str(out_dir))
