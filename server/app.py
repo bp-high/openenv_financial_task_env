@@ -31,6 +31,10 @@ app = create_app(
     FinancialAction,
     FinancialObservation,
     env_name="financial_task_env",
+    # GRPO training opens N concurrent WebSocket sessions (one per generation).
+    # 16 covers most reasonable num_generations × gradient_accumulation configs;
+    # bump higher if you train with larger effective batch.
+    max_concurrent_envs=16,
 )
 
 

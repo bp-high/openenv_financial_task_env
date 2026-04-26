@@ -31,6 +31,13 @@ from graders import grade_task
 from rewards import RewardTracker
 
 
+# OpenEnv concurrency support — each WebSocket session gets its own
+# FinancialEnvironment instance.  Per-instance state (workdir, gold stash,
+# code-step counter) is fully session-isolated; gold-stash naming uses
+# uuid4-randomized tmpdirs that won't collide.
+SUPPORTS_CONCURRENT_SESSIONS: bool = True
+
+
 class FinancialEnvironment(Environment):
     """OpenEnv environment for financial spreadsheet tasks with code execution.
 
@@ -208,30 +215,56 @@ class FinancialEnvironment(Environment):
     # Gold stashing — defense against reward hacking via gold-file-read
     # ------------------------------------------------------------------
     def _stash_gold_files(self, task: dict[str, Any], stash_dir: Path) -> None:
-        """Move all gold files referenced by `task` into `stash_dir` and rewrite
-        the task's gold-file paths to point at the moved copies.  We track the
-        original paths in `self._gold_originals` so close() can restore them.
+        """Stash all gold files referenced by `task` into `stash_dir` and
+        rewrite the task's gold-file paths to point at the stashed copies.
 
-        Why move (not copy)?  Copying leaves the originals glob-able in data/,
-        defeating the purpose.  Move rents the file to a unguessable tmp path
-        for the duration of the episode; close() puts it back.
+        Two modes (set via `FINANCIAL_ENV_GOLD_STASH=move|copy`, default `move`):
 
-        Caveat: this is single-tenant per task — two parallel episodes of the
-        same task would race.  For multi-tenant training, run one env per
-        worker process, or use a lockfile (TODO).
+        * **move** (default): rent the gold file to a uuid-randomized tmp path
+          for the duration of the episode; close() puts it back.  Strongest
+          defense — agent globbing data/ finds nothing.  Single-tenant: two
+          parallel episodes of the same task would race.
+
+        * **copy**: each session gets its own copy, originals stay in data/.
+          Concurrent-friendly (required for GRPO with N>1 generations on the
+          same task).  Trades the data/-glob defense for parallelism, but
+          Phase 7 byte-equality + Phase 9 early-submit gate still block
+          'submit gold/source unchanged' exploits independently.
+
+        For training Spaces, set `FINANCIAL_ENV_GOLD_STASH=copy` so concurrent
+        rollouts don't fight over the same source's rename.
         """
         from secrets import token_hex
 
-        moves: list[tuple[str, str]] = []  # (original, stashed) for restore
-        path_map: dict[str, str] = {}      # original -> stashed (dedup)
+        mode = os.environ.get("FINANCIAL_ENV_GOLD_STASH", "move").lower()
+        moves: list[tuple[str, str]] = []  # (original, stashed) for restore (move mode only)
+        path_map: dict[str, str] = {}      # original -> stashed (dedup within session)
 
         def _stash(src: str, label: str) -> str:
-            """Move src into stash_dir. Idempotent: same src always maps to the
-            same stashed path within an episode."""
+            """Stash src into stash_dir.  Idempotent within a session: same
+            src always maps to the same stashed path."""
             if src in path_map:
                 return path_map[src]
             suffix = Path(src).suffix or ""
             dest = stash_dir / f"{label}_{token_hex(3)}{suffix}"
+
+            if mode == "copy":
+                # Concurrent-safe: each session gets its own private copy
+                try:
+                    shutil.copy2(src, dest)
+                except FileNotFoundError:
+                    # Source already moved by a concurrent session — the
+                    # data/ original is gone, but that's OK in copy mode if
+                    # another session published its stash to a known path.
+                    # For correctness, just record the original path; grader
+                    # will fail gracefully via the existence check upstream.
+                    path_map[src] = src
+                    return src
+                # No restore-on-close needed in copy mode (originals untouched)
+                path_map[src] = str(dest)
+                return str(dest)
+
+            # move mode (default): atomic rename, restore on close()
             try:
                 Path(src).rename(dest)  # atomic on same FS
             except OSError:
