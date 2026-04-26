@@ -6,7 +6,7 @@ colorTo: blue
 sdk: docker
 pinned: false
 app_port: 8000
-base_path: /web
+base_path: /dashboard
 tags:
   - openenv
   - agent-environment
@@ -23,14 +23,14 @@ An [OpenEnv](https://github.com/meta-pytorch/OpenEnv) **code-execution
 environment** for training and evaluating LLM agents on **real-world office
 document work** — Excel spreadsheets, Word documents, and PowerPoint decks.
 The agent writes Python code (`openpyxl` / `python-docx` / `python-pptx`)
-to read or modify authentic enterprise files, and gets graded by a
+to read or modify authentic enterprise files and gets graded by a
 **multi-layer, gaming-resistant** scoring stack.
 
-> 119 tasks across 3 file formats. 22-task eval split. Real artifacts from
+> 119 tasks across 3 file formats · 22-task eval split · Real artifacts from
 > [Finch (FinWorkBench)](https://huggingface.co/datasets/FinWorkBench/Finch),
 > [OSWorld-Verified](https://github.com/xlang-ai/OSWorld), and
-> [PPTArena](https://github.com/michaelofengend/PPTArena). Multi-layer
-> grading: validity gate → structural diff → spec-aligned per-task evaluator.
+> [PPTArena](https://github.com/michaelofengend/PPTArena) · Multi-layer
+> grading + four independent reward-hacking defenses.
 
 ---
 
@@ -50,10 +50,13 @@ Did its structural distance to the gold reference actually decrease? Final
 grade is a 2- or 3-layer composition: validity gate + structural diff +
 (for docx) the per-task evaluator from OSWorld.
 
-**Result you can reproduce today.** A frontier 270B-class model
-(MiniMax-M2.1) gets **0.390 avg / 41% success rate** on the 22-task eval.
-A small 3B trainable target (Qwen2.5-Coder-3B-Instruct) gets **0.002 avg
-/ 0% success**. That gap is the RL training story.
+**Training pipeline.** Kimi-K2.5 (the teacher) ran on the 97 training tasks
+to produce trajectories; we filtered them with a defense-in-depth pipeline
+(score ≥ 0.4, more than 1 step, never `1-step submit_file`) into a 53-trajectory
+SFT corpus. Qwen2.5-Coder-3B-Instruct (the student) was warm-started with
+LoRA on this corpus across two configs (4K and 8K context) — both runs
+logged on HF Jobs L40S, ~$0.50–0.80 each. The 8K run is online at
+[bpHigh/qwen3b-office-sft-kimi-long](https://huggingface.co/bpHigh/qwen3b-office-sft-kimi-long).
 
 ---
 
@@ -61,24 +64,56 @@ A small 3B trainable target (Qwen2.5-Coder-3B-Instruct) gets **0.002 avg
 
 | Model | Avg score | Success rate | xlsx (n=10) | docx (n=4) | pptx (n=8) |
 |---|---|---|---|---|---|
-| **MiniMaxAI/MiniMax-M2.1** (frontier baseline) | **0.390** | 41% | 0.293 | 0.445 | 0.485 |
-| **Qwen/Qwen2.5-Coder-3B-Instruct** (training target) | **0.002** | 0% | 0.003 | 0.001 | 0.003 |
-| **Qwen3-Coder-3B-RL** *(after SFT + GRPO — TBD)* | *coming* | *coming* | *coming* | *coming* | *coming* |
+| **MiniMaxAI/MiniMax-M2.1** (frontier baseline) | 0.390 | 41% | 0.293 | 0.445 | 0.485 |
+| **moonshotai/Kimi-K2.5** (teacher) | 0.481 | 52% | 0.370 | 0.472 | 0.673 |
+| **Qwen/Qwen2.5-Coder-3B-Instruct** (student baseline) | **0.001** | 0% | 0.001 | 0.001 | 0.001 |
+| **Qwen3-Coder-3B + LoRA SFT (4K)** *(eval pending)* | *coming* | *coming* | – | – | – |
+| **Qwen3-Coder-3B + LoRA SFT (8K)** *(eval pending)* | *coming* | *coming* | – | – | – |
 
-Reproduce:
+Reproduce any row:
 
 ```bash
-# MiniMax baseline
+# Hosted models via HF Router
 python inference.py --split eval --model MiniMaxAI/MiniMax-M2.1 \
   --output-dir runs/baseline_minimax_m21_eval
 
-# Qwen baseline
-python inference.py --split eval --model Qwen/Qwen2.5-Coder-3B-Instruct \
-  --output-dir runs/baseline_qwen25coder3b_eval
+# In-process LoRA eval (no hosted endpoint needed)
+python eval_lora.py \
+  --adapters bpHigh/qwen3b-office-sft-kimi,bpHigh/qwen3b-office-sft-kimi-long \
+  --split eval --output-dir runs/sft_eval
 ```
 
-Per-task breakdown lives in `runs/<dir>/summary.csv` and full step-by-step
+Per-task breakdown lives in `runs/<dir>/summary.csv`; full step-by-step
 trajectories in `runs/<dir>/trajectories/<task_id>.jsonl`.
+
+---
+
+## SFT training run — what the student saw
+
+Student model: `Qwen/Qwen2.5-Coder-3B-Instruct`. LoRA r=32 on all-linear
+targets, bf16, assistant-only loss masking. Two runs on 1× L40S 48GB
+($1.80/hr).
+
+![SFT loss — 4K vs 8K context length ablation](runs/sft_plots/comparison_4k_vs_8k.png)
+
+| | 4K context | 8K context |
+|---|---|---|
+| Hardware | L40S 48GB | L40S 48GB |
+| Runtime | 198s | 354s |
+| Loss start → end | 0.412 → 0.069 | 0.384 → 0.103 |
+| Final train_loss | 0.196 | 0.193 |
+| Cost | ~$0.50 | ~$0.80 |
+| Adapter | [bpHigh/qwen3b-office-sft-kimi](https://huggingface.co/bpHigh/qwen3b-office-sft-kimi) | [bpHigh/qwen3b-office-sft-kimi-long](https://huggingface.co/bpHigh/qwen3b-office-sft-kimi-long) |
+
+The 8K curve has slightly higher end-loss because it sees the *long*
+debugging trajectories from Kimi (5–8 of 53 episodes get truncated at 4K).
+Same convergence target, harder distribution → which configuration generalizes
+better is what the eval will tell us.
+
+**Where the training logs live:**
+- HF Jobs page (raw logs streamable): [Job 4K](https://huggingface.co/jobs/bpHigh/69ed74aed70108f37acdf4fc) · [Job 8K](https://huggingface.co/jobs/bpHigh/69ed7b51d2c8bd8662bceef4)
+- Parsed metrics + plots: [`runs/sft_plots/`](runs/sft_plots/)
+- Loss-curve generator: [`data_pipeline/analyze_sft_logs.py`](data_pipeline/analyze_sft_logs.py) (re-runnable on any HF Job ID)
 
 ---
 
@@ -110,7 +145,7 @@ reset(task_id="finch_10")
 step(action_type="code", content="...")     # 0–15 of these
   ↓ subprocess runs the code, returns stdout/stderr
   ↓ env measures: did the file change? is it still valid? did it move toward gold?
-  ↓ reward = 0.005–0.10 (dense process reward, see below)
+  ↓ reward = 0.005–0.10 (dense process reward)
 
 step(action_type="submit_file", content="<path>")   # ends episode
   ↓ multi-layer grading
@@ -118,64 +153,58 @@ step(action_type="submit_file", content="<path>")   # ends episode
 ```
 
 Three action types: `"code"` (Python), `"submit"` (text answer for QA tasks),
-`"submit_file"` (path to a modified file).
+`"submit_file"` (path to a modified file). **Submit is rejected on step 1** —
+the agent must execute code at least once before any submission is accepted
+(see *Defenses* below).
 
 ---
 
 ## Reward design
 
-This is the most opinionated part of the env, because the [judging guide](https://docs.google.com/document/d/1Odznuzwtb1ecDOm2t6ToZd4MuMXXfO6vWUGcxbC6mFs/edit)
-explicitly calls out reward hacking as a top failure mode. Two layers, both
-designed for *spec-aligned* signal.
+Two layers, both designed for *spec-aligned* signal.
 
 ### Per-step process reward (6 components, capped at 0.10/step)
 
-Every code step gets scored across six independent signals, all measured
-from real file state — not regex on the agent's code:
-
-| Signal | Range | What it actually checks |
+| Signal | Range | Measured from |
 |---|---|---|
-| `exec_health` | 0–0.020 | Subprocess exited 0; bonus if stdout non-empty |
-| `lib_engagement` | 0–0.010 | Code uses the family's expected library (`openpyxl` / `python-docx` / `python-pptx`) |
-| `mutation` | 0–0.030 | SHA-256 of the working file changed since last step |
-| `validity` | 0–0.020 | Mutated file still parses with the family's loader (no corruption) |
-| `progress` | 0–0.040 | Structural distance to gold *decreased* this step |
-| `eval_check` | 0–0.020 | Per-task evaluator score *increased* (docx-only currently) |
+| `exec_health` | 0–0.020 | Subprocess exit code; bonus if stdout non-empty |
+| `lib_engagement` | 0–0.010 | Code uses the family's expected library |
+| `mutation` | 0–0.030 | SHA-256 of working file changed |
+| `validity` | 0–0.020 | Mutated file still parses with the family's loader |
+| `progress` | 0–0.040 | Structural distance to gold *decreased* |
+| `eval_check` | 0–0.020 | Per-task evaluator score *increased* (docx-only) |
 
 `progress` and `eval_check` give RL a dense gradient *toward correctness*,
-not just "code ran". They're disabled at eval time (`FINANCIAL_ENV_PROGRESS=0`)
-to keep the benchmark honest.
+not just "code ran". They're disabled at eval time
+(`FINANCIAL_ENV_PROGRESS=0`) to keep the benchmark honest.
 
 ### Final grade (per family)
 
 | Family | Layer 1 (gate) | Layer 2 | Layer 3 |
 |---|---|---|---|
-| `xlsx` | — | 30% sheet-name match | 70% cell-level diff (2% numeric tolerance) |
-| `docx` | python-docx parse | 40% paragraph diff | 60% per-task OSWorld evaluator (`compare_docx_files`, `check_tabstops`, `is_first_line_centered`, `compare_line_spacing`, …) |
-| `pptx` | python-pptx parse | 20% slide-count | 80% avg per-shape composite: 40% text + 20% style + 20% position + 20% size |
+| `xlsx` | – | 30% sheet-name match | 70% cell-level diff (2% numeric tolerance) |
+| `docx` | python-docx parse + byte-equality refusal | 40% paragraph diff | 60% per-task OSWorld evaluator (`compare_docx_files`, `check_tabstops`, etc.) |
+| `pptx` | python-pptx parse + byte-equality refusal | 20% slide-count | 80% avg per-shape composite: 40% text + 20% style + 20% position + 20% size |
 
-The `docx` 3rd layer is a port of OSWorld's [`metrics/docs.py`](https://github.com/xlang-ai/OSWorld/blob/main/desktop_env/evaluators/metrics/docs.py)
+The `docx` 3rd layer is a port of OSWorld's
+[`metrics/docs.py`](https://github.com/xlang-ai/OSWorld/blob/main/desktop_env/evaluators/metrics/docs.py)
 (Apache-2.0). 16 evaluator functions, including compound `or` (multi-gold)
-and `and` (all-must-pass) checks. Single + compound normalized into a
-uniform `{conj, checks: [...]}` schema.
+and `and` (all-must-pass) checks.
 
-### Anti-hacking defenses
+### Anti-hacking defenses (4 independent layers)
 
-The env is built on the assumption that an agent will try to game the
-reward. Defenses (per [edits.md](edits.md) Phase 4):
+A model attempting the [Kimi-K2.5 exploit](edits.md#phase-7--live-discovered-exploit--anti-exploit-fix)
+(submit unmodified source on step 1, score 0.998) hits **all four** of:
 
-| Vector | Defense |
-|---|---|
-| Persistent globals | Each step is a fresh `subprocess.run` |
-| Time runaway | 30s subprocess timeout per step |
-| **Read the gold file from `data/`** | **At episode start, `move()` every gold file to `/tmp/oe_gold_<random>/` with generic names; restore on `close()`. The agent can't `glob('data/**/*Gold*')` for it.** |
-| Generic-distance gaming | `eval_check` rewards *spec-aligned* progress, not just diff-shrinkage |
-| `lib_engagement` regex gaming | Capped at 0.010/step — trivially bounded |
-| `mutation` spam (save garbage) | Capped, and the `progress`/`eval_check` signals dwarf it on real edits |
+| Layer | Phase | What it does |
+|---|---|---|
+| **Env action gate** | 9 | Refuses `submit_file` if no code step has been taken — episode stays open for recovery |
+| **Per-episode gold stash** | 4 | Gold files moved to `/tmp/oe_gold_<random>/` at episode start; restored on close. Defeats `glob('data/**/*Gold*')` searches |
+| **Grader byte-equality refusal** | 7 | If submit's bytes match source bytes → score=0.001 (unless task is OSWorld `infeasible`) |
+| **SFT corpus filter** | 8 | Builder drops `n_steps==1 + submit_file` trajectories even at high score |
 
-Caveat: full sandbox isolation (bwrap / seccomp / read-only mount) is the
-right long-term answer; we ship the path-stash defense as a pragmatic v1.
-See [edits.md](edits.md) for the full audit.
+See [`edits.md`](edits.md) for the live story of how Kimi found the exploit
+during eval and the 3 fixes that followed.
 
 ---
 
@@ -185,7 +214,7 @@ See [edits.md](edits.md) for the full audit.
 
 | Field | Type | Description |
 |---|---|---|
-| `action_type` | `str` | `"code"` (Python), `"submit"` (text), `"submit_file"` (path) |
+| `action_type` | `str` | `"code"`, `"submit"`, `"submit_file"` |
 | `content` | `str` | Code, answer text, or absolute file path |
 
 ### `FinancialObservation`
@@ -194,12 +223,12 @@ See [edits.md](edits.md) for the full audit.
 |---|---|---|
 | `task_id` | `str` | e.g. `finch_10`, `osworld_0a0faba3`, `pptarena_case_60_fix_text_placement` |
 | `task_description` | `str` | Instruction + constraints + source-file summary |
-| `source_file` | `str` | Path to the working file (already copied into a per-episode tmpdir) |
+| `source_file` | `str` | Path to the working file (per-episode tmpdir copy) |
 | `task_type` | `str` | `"QA"` or `"MODIFY"` |
-| `feedback` | `str` | Stdout/stderr of code, or grading explanation. Includes the per-step reward decomposition for debugging. |
+| `feedback` | `str` | Stdout/stderr of code, or grading explanation. Includes the per-step reward decomposition. |
 | `current_step` / `max_steps` | `int` | 0–15 |
 | `done` | `bool` | Episode finished |
-| `reward` | `float` | Step or final reward, in (0.001, 0.999) |
+| `reward` | `float` | Step or final reward in (0.001, 0.999) |
 
 ---
 
@@ -209,7 +238,7 @@ See [edits.md](edits.md) for the full audit.
 
 - Python 3.10+
 - Docker (for HF Space deployment)
-- LLM API key (for `inference.py`)
+- LLM API key (for `inference.py`) or HF Jobs subscription (for training)
 
 ### Local dev
 
@@ -219,7 +248,7 @@ PYTHONPATH=. uvicorn server.app:app --host 0.0.0.0 --port 8000 \
   --ws-ping-interval 600 --ws-ping-timeout 600 --reload
 ```
 
-### Run a baseline
+### Run a baseline against a hosted model
 
 ```bash
 export HF_TOKEN="hf_..."
@@ -231,23 +260,57 @@ python inference.py \
   --task-timeout 900
 ```
 
-CLI flags worth knowing:
-- `--split {train,eval,all}` — manifest split
-- `--family {xlsx,docx,pptx,all}` — filter to one family
-- `--task-ids id1,id2,…` — explicit list (overrides split/family)
-- `--limit N` — cap number of tasks
-- `--resume` — merge new task results into an existing `--output-dir`
-  (useful for retrying flaky tasks without losing prior trajectories)
+### Run an in-process LoRA eval (no hosted endpoint needed)
 
-Output lands at `runs/<timestamp>_<model_slug>/` with `results.json`,
-`summary.csv`, per-task `trajectories/*.jsonl`, and a mirrored `log.txt`.
+```bash
+python eval_lora.py \
+  --base-model Qwen/Qwen2.5-Coder-3B-Instruct \
+  --adapters bpHigh/qwen3b-office-sft-kimi,bpHigh/qwen3b-office-sft-kimi-long \
+  --split eval \
+  --output-dir runs/sft_eval
+```
+
+CLI flags worth knowing on `inference.py`:
+- `--split {train,eval,all}`
+- `--family {xlsx,docx,pptx,all}`
+- `--task-ids id1,id2,…` (overrides split/family)
+- `--limit N`
+- `--resume` — merge new task results into an existing `--output-dir`
+- `--skip-completed` — re-run only failed/exploit tasks (paired with `--resume`)
 
 ### Re-pull data from upstream sources
 
 ```bash
-python data_pipeline/finch_pull.py            # 50 Finch xlsx tasks
-python data_pipeline/osworld_writer_pull.py   # 21 OSWorld docx tasks
-python data_pipeline/pptarena_pull.py --root /path/to/PPTArena-main   # 38 PPTArena pptx tasks
+python data_pipeline/finch_pull.py
+python data_pipeline/osworld_writer_pull.py
+python data_pipeline/pptarena_pull.py --root /path/to/PPTArena-main
+```
+
+### Build the SFT corpus
+
+```bash
+python data_pipeline/build_sft_corpus.py \
+  --runs runs/teacher_kimi_k25_train \
+  --output data/sft_kimi_k25.jsonl \
+  --score-threshold 0.4
+```
+
+### Train the student (HF Jobs)
+
+```bash
+hf jobs run --flavor l40sx1 --timeout 8h --secrets HF_TOKEN \
+  pytorch/pytorch:2.6.0-cuda12.4-cudnn9-devel \
+  bash -c "apt-get update -qq && apt-get install -y -qq git && \
+           git clone https://github.com/bp-high/openenv_financial_task_env.git /work && \
+           cd /work && \
+           pip install -U 'trl>=0.11' peft accelerate bitsandbytes && \
+           python train_sft.py \
+             --dataset data/sft_kimi_k25.jsonl \
+             --base-model Qwen/Qwen2.5-Coder-3B-Instruct \
+             --output-dir /tmp/qwen3b-sft \
+             --epochs 4 --gradient-accumulation 2 --lora-r 32 \
+             --max-seq-len 8192 \
+             --push-to-hub bpHigh/qwen3b-office-sft-kimi-long"
 ```
 
 ### Docker
@@ -257,9 +320,6 @@ docker build -t office-task-env:latest .
 docker run -p 8000:8000 office-task-env:latest
 ```
 
-The provided [`Dockerfile`](Dockerfile) installs `openpyxl`, `python-docx`,
-`python-pptx`, `rapidfuzz`, and `Pillow`.
-
 ---
 
 ## Project structure
@@ -268,48 +328,43 @@ The provided [`Dockerfile`](Dockerfile) installs `openpyxl`, `python-docx`,
 .
 ├── data/
 │   ├── manifest.jsonl                 # 109 rows: 50 Finch + 21 OSWorld + 38 PPTArena
+│   ├── sft_kimi_k25.jsonl             # 53 filtered teacher trajectories
 │   ├── 0/, 21/, …                     # 10 hand-curated xlsx tasks
 │   ├── finch_50/<id>/{src,ref}.xlsx
 │   ├── osworld_writer/<uuid>/<src + N gold>.docx
 │   └── pptarena/<slug>/{src,ref}.pptx
-├── data_pipeline/                     # Pullers for each upstream dataset
+├── data_pipeline/
+│   ├── finch_pull.py                  # Phase 1 — Finch xlsx tasks
+│   ├── osworld_writer_pull.py         # Phase 3 — OSWorld docx tasks
+│   ├── pptarena_pull.py               # Phase 5 — PPTArena pptx tasks
+│   ├── build_sft_corpus.py            # Phase 8 — trajectories → SFT JSONL
+│   ├── analyze_sft_logs.py            # Phase 10.1 — HF Job logs → metrics + PNG
+│   └── compare_sft_runs.py            # overlay multiple SFT runs
 ├── graders/
 │   ├── __init__.py                    # grade_xlsx + grade_docx + grade_pptx
 │   └── docx_metrics.py                # 16 ported OSWorld evaluators
 ├── server/
-│   ├── financial_environment.py       # OpenEnv environment + gold-stash
+│   ├── financial_environment.py       # OpenEnv environment + gold-stash + early-submit gate
 │   └── app.py                         # FastAPI + WebSocket
 ├── rewards.py                         # 6-component RewardTracker
-├── tasks.py                           # Manifest loader + helpers
-├── inference.py                       # Baseline runner with --split / --family / --resume
-├── runs/                              # Baseline & training-run results
-└── edits.md                           # Full Round-1 → Round-2 change log
+├── tasks.py                           # Manifest loader
+├── inference.py                       # API-based eval (Router/Nebius/OpenAI)
+├── eval_lora.py                       # In-process LoRA eval (no API needed)
+├── train_sft.py                       # SFT trainer (TRL + PEFT, HF Jobs)
+├── runs/                              # Baseline + teacher + SFT artifacts (incl. plots)
+└── edits.md                           # Full Round-1 → Round-2 change log (10 phases)
 ```
-
----
-
-## What's next (training pipeline — in progress)
-
-Per the budget plan in [edits.md](edits.md) (~$45 on HF Jobs):
-
-1. Run a teacher (Claude Haiku 4.5) on the 97 train tasks, filter by score
-2. SFT-warm-start `Qwen2.5-Coder-3B-Instruct` with LoRA on filtered trajectories (Unsloth, ~$10 on 1× A100 80GB)
-3. GRPO continued training with rollouts hitting this env in-process (~$30, 12h on the same GPU)
-4. Re-eval on the 22-task split → before/after plot
-
-The trajectory persistence in `runs/<dir>/trajectories/*.jsonl` doubles as
-the SFT corpus format — `(messages, completion)` pairs ready for
-`SFTTrainer`.
 
 ---
 
 ## Round-1 → Round-2 change log
 
-The full journey from the original 10-task xlsx-only env to today's
-3-format / 119-task / multi-layer-graded env is documented in
+The journey from the original 10-task xlsx-only env to today's 3-format /
+119-task / multi-layer-graded env is documented phase-by-phase in
 [`edits.md`](edits.md): manifest loader, RewardTracker, OSWorld docx port,
 PPTArena ingest, layout+style-aware pptx grader, gold-stash hardening,
-inference v2.
+inference v2, anti-exploit defenses, SFT corpus builder, training script,
+log analyzer, in-process LoRA eval.
 
 ---
 
@@ -321,7 +376,11 @@ inference v2.
   docx tasks and the evaluator functions in `graders/docx_metrics.py` (Apache-2.0)
 - **PPTArena** ([repo](https://github.com/michaelofengend/PPTArena)) — the
   pptx tasks and the `evaluation_pairs_refined.json` schema
-- **OpenEnv / Meta PyTorch** ([repo](https://github.com/meta-pytorch/OpenEnv)) — the host framework
+- **Kimi-K2.5** (Moonshot AI, served via Nebius) — the SFT teacher
+- **Qwen2.5-Coder-3B-Instruct** (Alibaba Qwen team) — the student model
+- **TRL + PEFT + Unsloth + transformers** — training stack
+- **OpenEnv / Meta PyTorch** ([repo](https://github.com/meta-pytorch/OpenEnv)) — host framework
+- **Hugging Face Jobs** — compute for SFT runs
 
 If you use this environment in research, please cite the upstream datasets:
 

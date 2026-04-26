@@ -23,7 +23,8 @@ RUN uv pip install --system --no-cache-dir \
     "python-docx>=1.1.0" \
     "python-pptx>=1.0.0" \
     "rapidfuzz>=3.0.0" \
-    "Pillow>=10.0.0"
+    "Pillow>=10.0.0" \
+    "gradio>=5.0.0"
 
 COPY . /app/env/
 
