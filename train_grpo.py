@@ -295,33 +295,48 @@ del _smoke
 # initial observation comes from `reset()`.
 
 # %%
+# This system prompt mirrors the one in inference.py that produced the
+# Kimi-K2.5 / MiniMax baseline scores AND the SFT corpus.  Markdown
+# ```python``` blocks for code, plain SUBMIT_FILE: / SUBMIT_ANSWER: text
+# directives for finalization.  This is the format the SFT'd model already
+# emits fluently from training - matching it removes the format mismatch
+# that was causing 0 rewards under TRL's <tool_call>-XML expectation.
 SYSTEM_PROMPT = """You are an expert at editing office documents (Excel, Word, PowerPoint) with Python.
+You are working with a real .xlsx, .docx, or .pptx file.  Pick the right
+library based on the source_file path shown in the initial observation:
+  - .xlsx -> openpyxl  (load_workbook / wb.save)
+  - .docx -> python-docx  (Document / doc.save)
+  - .pptx -> python-pptx  (Presentation / prs.save)
 
-You have three tools.  Emit each call as a fenced ```json block — exactly one
-JSON object per response, no extra prose:
+CRITICAL RULES:
+1. Do NOT call reset(). Just write plain Python code in a ```python``` block.
+2. Use the EXACT file path provided in the observation. Do not guess paths.
+3. Each code block runs in a FRESH subprocess - you must re-import and re-open
+   the file every time. Variables do NOT persist between steps.
+4. Use print() liberally to see data. Read the output carefully before your
+   next step.
+5. You have at most 12 steps per episode. Be efficient: explore in step 1,
+   solve in step 2-3, submit.
+6. **You MUST execute at least one code step before submitting.** The env
+   will reject SUBMIT_ANSWER and SUBMIT_FILE on step 1 - you need to read
+   or modify the file with code first. Submitting the source file unchanged
+   is never a correct solve.
 
-```json
-{"name": "run_python_code", "arguments": {"code": "<python source>"}}
+RESPONSE FORMAT - use EXACTLY one of these three forms per response:
+
+To run Python code:
+```python
+your code here
 ```
 
-```json
-{"name": "submit_file", "arguments": {"path": "<absolute path>"}}
-```
+To submit a text answer (QA tasks like 'How many plants?'):
+SUBMIT_ANSWER: your answer here
 
-```json
-{"name": "submit_text_answer", "arguments": {"answer": "<text answer>"}}
-```
+To submit a modified file (MODIFY tasks):
+SUBMIT_FILE: /absolute/path/to/saved.<ext>
 
-Tool semantics:
-  - run_python_code: execute Python in a fresh subprocess.  Use openpyxl for
-    .xlsx, python-docx for .docx, python-pptx for .pptx.  Variables do NOT
-    persist between calls — re-import + re-open the file each call.
-  - submit_file: submit a modified file path as the final answer (MODIFY tasks).
-  - submit_text_answer: submit a text answer (QA tasks like 'How many plants?').
-
-You MUST execute at least one code step before submitting — the env rejects
-early submits.  Read the file with code first, make the modifications, save,
-then submit.  You have at most 12 turns per episode."""
+For MODIFY tasks: load with the right library, mutate, save to the SAME path,
+then SUBMIT_FILE that path."""
 
 train_ids = split_ids("train")
 # Drop hand-curated tasks (task_*) to focus GRPO on the larger Round-2 pool;
@@ -329,39 +344,23 @@ train_ids = split_ids("train")
 train_ids = [tid for tid in train_ids if not tid.startswith("task_")]
 print(f"Train tasks for GRPO: {len(train_ids)}")
 
-# Encode task_id as a marker prefix in the user prompt so the rollout_func
-# can recover which task each prompt belongs to.  TRL's rollout_func only
-# receives the prompt list — not the dataset row's other columns.
-TASK_ID_MARKER = "<task_id:"
-
-def _build_user_prompt(task_id: str) -> str:
-    return f"{TASK_ID_MARKER}{task_id}>\n\n{SYSTEM_PROMPT}"
-
 train_data = [
-    {"prompt": [{"role": "user", "content": _build_user_prompt(tid)}], "task_id": tid}
+    {"prompt": [{"role": "user", "content": SYSTEM_PROMPT}], "task_id": tid}
     for tid in train_ids
 ]
 train_ds = Dataset.from_list(train_data)
 
 
 # %% [markdown]
-# ## 6. Reward function — read env reward stashed by rollout_func
-#
-# Our `rollout_func` runs the env and returns the final reward in the
-# `env_reward_value` extra field.  TRL forwards extra fields as kwargs to
-# the reward function.
+# ## 6. Reward function — read env.reward after each episode
 
 # %%
-def env_reward(prompts=None, completions=None, env_reward_value=None, **kwargs) -> List[float]:
-    """Read the per-rollout final reward stashed by rollout_func.
-
-    `env_reward_value` is a list[float] of length == len(prompts × num_generations),
-    aligned with the order rollout_func returned its prompt_ids/completion_ids.
-    """
-    if env_reward_value is None:
-        # Defensive: if rollout_func didn't supply rewards, treat as 0
-        return [0.0] * len(completions or [])
-    return [float(r) for r in env_reward_value]
+def env_reward(environments, **kwargs) -> List[float]:
+    """TRL's environment_factory passes the list of OfficeDocumentEnv instances
+    after the multi-turn rollout ends.  We read `env.reward` (set by the last
+    tool call before done=True, OR the per-step reward if the episode ran out
+    of steps)."""
+    return [float(env.reward) for env in environments]
 
 
 # %% [markdown]
@@ -378,6 +377,14 @@ if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
 tokenizer.truncation_side = "left"
 
+# TRL's environment_factory path runs add_response_schema(tokenizer) to parse
+# tool calls from completions.  Auto-detection fails for Qwen2.5-Coder's chat
+# template (it only knows qwen3, qwen3.5, llama3, glm4, gptoss), so we attach
+# qwen3_schema manually — it parses <tool_call>...</tool_call> blocks via
+# regex and is template-agnostic, so it works fine for Qwen2.5 too.
+from trl.chat_template_utils import qwen3_schema
+tokenizer.response_schema = qwen3_schema
+
 print(f"Loading base model: {BASE_MODEL}")
 base_model = AutoModelForCausalLM.from_pretrained(
     BASE_MODEL,
@@ -392,262 +399,6 @@ model.print_trainable_parameters()
 
 
 # %% [markdown]
-# ## 7.5  Custom rollout_func (parses markdown JSON tool calls)
-#
-# **Why custom?**  The SFT'd model emits tool calls as ``` ```json {...} ``` ```
-# markdown blocks (Kimi-K2.5's native format), not as `<tool_call>...</tool_call>`
-# XML — which is what TRL's `environment_factory` parser expects.  Result with
-# `environment_factory`: TRL parses 0 tool calls, env never executes any code,
-# reward is permanently 0, advantage is 0, no learning happens.
-#
-# This `rollout_func` takes over the rollout loop: vLLM gen → parse markdown
-# JSON → dispatch to env → append feedback → loop.  We build the trajectory
-# token-by-token so TRL still gets `prompt_ids`, `completion_ids`, `logprobs`,
-# plus an `env_mask` that marks which tokens are model-emitted vs env-feedback
-# so loss is only computed on model tokens.
-
-# %%
-import re as _re
-import json as _json
-from typing import Any as _Any
-
-_TOOL_CALL_BLOCK = _re.compile(r"```(?:json|tool_call)?\s*\n(\{.*?\})\s*\n```", _re.DOTALL)
-_PYTHON_BLOCK = _re.compile(r"```python\s*\n(.*?)```", _re.DOTALL)
-
-
-def parse_tool_call(text: str) -> dict | None:
-    """Extract a single tool call from the model's text output.
-
-    Tries (in order):
-      1. ```json {"name":..., "arguments":{...}} ``` block — primary format
-         from the SFT'd model
-      2. ```python ... ``` block → treated as run_python_code
-      3. Kimi K2.5 native ``<|tool_call_begin|>`` markers (legacy SFT data)
-
-    Returns dict with `name` and `arguments` keys, or None if no tool call.
-    """
-    # 1. JSON tool-call block
-    m = _TOOL_CALL_BLOCK.search(text)
-    if m:
-        try:
-            obj = _json.loads(m.group(1))
-            if isinstance(obj, dict) and "name" in obj and "arguments" in obj:
-                return obj
-        except _json.JSONDecodeError:
-            pass
-
-    # 2. Bare ```python``` block → wrap as run_python_code
-    m = _PYTHON_BLOCK.search(text)
-    if m:
-        return {"name": "run_python_code", "arguments": {"code": m.group(1).strip()}}
-
-    # 3. Kimi K2.5 native markers (kept for SFT trajectory parity)
-    if "<|tool_call_begin|>" in text or "<|tool_calls_section_begin|>" in text:
-        body = text
-        for marker in ("<|tool_call_argument_begin|>", "<|tool_call_begin|>"):
-            if marker in text:
-                body = text.split(marker, 1)[1]
-                break
-        m = _re.search(r"\{.*?\}", body, _re.DOTALL)
-        if m:
-            try:
-                obj = _json.loads(m.group(0))
-                # Kimi sometimes emits {"code": "..."} directly without a name
-                if "code" in obj:
-                    return {"name": "run_python_code", "arguments": {"code": obj["code"]}}
-                if "name" in obj and "arguments" in obj:
-                    return obj
-            except _json.JSONDecodeError:
-                pass
-
-    return None
-
-
-def _extract_task_id(prompt) -> str | None:
-    """Recover the embedded `<task_id:NAME>` marker from the user prompt."""
-    if isinstance(prompt, list):
-        text = prompt[0].get("content", "") if prompt else ""
-    else:
-        text = str(prompt)
-    m = _re.match(r"<task_id:([^>]+)>", text)
-    return m.group(1) if m else None
-
-
-_ROLLOUT_MAX_TURNS = 12
-_ROLLOUT_MAX_TOKENS_PER_TURN = 1024  # cap per-turn assistant output
-
-
-def rollout_func(prompts: list, trainer: _Any) -> dict:
-    """Custom multi-turn rollout that parses markdown JSON tool calls.
-
-    For each (prompt × num_generations):
-      1. Spawn an OfficeDocumentEnv, reset it with the prompt's task_id
-      2. Loop: vLLM gen → parse → env step → append feedback (until done or 12 turns)
-      3. Aggregate full trajectory tokens; mask env-feedback tokens out of loss
-
-    Returns:
-        prompt_ids:   list[batch×num_gen] of initial prompt token IDs
-        completion_ids: list[batch×num_gen] of all post-prompt tokens
-                        (interleaved model-output + env-feedback)
-        logprobs:     list[batch×num_gen] of per-completion-token logprobs
-                        (env-feedback positions filled with 0.0)
-        env_mask:     list[batch×num_gen] of 0/1 — 1 = model-emitted token
-                        (loss only flows through these)
-        env_reward_value: list[batch×num_gen] of final env.reward per rollout
-                          (consumed by env_reward() reward function)
-    """
-    tok = trainer.processing_class
-    num_gen = trainer.num_generations if trainer.model.training else trainer.num_generations_eval
-
-    # Build per-rollout state.  Each entry corresponds to one rollout
-    # (one prompt × one generation), in the order TRL expects.
-    states = []
-    for prompt in prompts:
-        task_id = _extract_task_id(prompt)
-        for _ in range(num_gen):
-            env = OfficeDocumentEnv()
-            try:
-                initial_obs = env.reset(task_id=task_id)
-            except Exception as e:
-                initial_obs = f"Env reset failed: {e}"
-            messages = [
-                {"role": "system", "content": "You are a careful Python coder."},
-                {"role": "user", "content": initial_obs},
-            ]
-            initial_text = tok.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True
-            )
-            initial_ids = tok(initial_text, add_special_tokens=False)["input_ids"]
-            states.append({
-                "env": env,
-                "messages": messages,
-                "prompt_ids": initial_ids,
-                "completion_ids": [],
-                "logprobs": [],
-                "env_mask": [],
-                "done": False,
-                "task_id": task_id,
-            })
-
-    print(f"[rollout_func] Starting {len(states)} rollouts for {len(prompts)} prompts × {num_gen} gens")
-
-    # Multi-turn loop: at each turn, batch-generate for all alive rollouts.
-    for turn in range(_ROLLOUT_MAX_TURNS):
-        alive = [(i, s) for i, s in enumerate(states) if not s["done"]]
-        if not alive:
-            break
-
-        # Build current input sequence per alive rollout (prompt + accumulated completion).
-        batch_inputs = [s["prompt_ids"] + s["completion_ids"] for _, s in alive]
-
-        # Truncate if any input exceeds vllm context.  Left-truncate (drop oldest
-        # env feedback, keep recent context) so the gen prompt stays intact.
-        max_in = trainer.args.vllm_max_model_length - _ROLLOUT_MAX_TOKENS_PER_TURN
-        for i, ids in enumerate(batch_inputs):
-            if len(ids) > max_in:
-                batch_inputs[i] = ids[-max_in:]
-
-        # Single-turn batched vLLM generation
-        _, comp_ids_batch, logprobs_batch, _ = trainer.vllm_generation.generate(
-            prompts=batch_inputs,
-            images=None,
-            num_generations=1,
-            profiler=None,
-        )
-        # vLLM returns logprobs as list[batch][token][num_logprobs]; keep top-1.
-        logprobs_batch = [[(lp[0] if lp else 0.0) for lp in seq] for seq in logprobs_batch]
-
-        for (idx, s), comp_ids, lp in zip(alive, comp_ids_batch, logprobs_batch):
-            comp_text = tok.decode(comp_ids, skip_special_tokens=False)
-            # Strip any trailing chat-template special tokens to keep the
-            # message content clean for the next apply_chat_template.
-            clean_text = comp_text.replace("<|im_end|>", "").strip()
-
-            s["completion_ids"].extend(comp_ids)
-            s["logprobs"].extend(lp)
-            s["env_mask"].extend([1] * len(comp_ids))
-            s["messages"].append({"role": "assistant", "content": clean_text})
-
-            action = parse_tool_call(clean_text)
-            if action is None:
-                # Model didn't emit a parseable tool call — end this rollout.
-                # env.reward keeps whatever was last set (likely 0 if we never stepped).
-                s["done"] = True
-                continue
-
-            name = action.get("name")
-            args = action.get("arguments", {}) or {}
-            try:
-                if name == "run_python_code":
-                    feedback = s["env"].run_python_code(args.get("code", ""))
-                elif name == "submit_file":
-                    feedback = s["env"].submit_file(args.get("path", ""))
-                elif name == "submit_text_answer":
-                    feedback = s["env"].submit_text_answer(args.get("answer", ""))
-                else:
-                    feedback = f"Unknown tool: {name!r}.  Valid tools: run_python_code, submit_file, submit_text_answer."
-            except ValueError as e:
-                # Episode finished mid-tool-call (early submit gate, etc.)
-                feedback = f"Tool call rejected: {e}"
-                s["done"] = True
-            except Exception as e:
-                feedback = f"Tool call raised: {type(e).__name__}: {e}"
-
-            if s["env"].done:
-                s["done"] = True
-
-            # Tokenize the env feedback as a user-turn wire format.  We diff
-            # the chat-template output before vs after appending the feedback
-            # message, so we capture exactly the bytes the chat template adds
-            # (im_end, im_start user, content, im_end, im_start assistant, ...).
-            text_before = tok.apply_chat_template(
-                s["messages"], tokenize=False, add_generation_prompt=False
-            )
-            new_messages = s["messages"] + [{"role": "user", "content": feedback}]
-            text_after = tok.apply_chat_template(
-                new_messages, tokenize=False, add_generation_prompt=True
-            )
-            fb_wire = text_after[len(text_before):]
-            fb_ids = tok(fb_wire, add_special_tokens=False)["input_ids"]
-
-            s["completion_ids"].extend(fb_ids)
-            s["logprobs"].extend([0.0] * len(fb_ids))
-            s["env_mask"].extend([0] * len(fb_ids))
-            s["messages"] = new_messages
-
-    # Drain remaining envs and collect outputs in the order TRL gave us.
-    out_prompt_ids = []
-    out_completion_ids = []
-    out_logprobs = []
-    out_env_mask = []
-    out_rewards = []
-    n_with_reward = 0
-    for s in states:
-        out_prompt_ids.append(s["prompt_ids"])
-        out_completion_ids.append(s["completion_ids"])
-        out_logprobs.append(s["logprobs"])
-        out_env_mask.append(s["env_mask"])
-        r = float(s["env"].reward)
-        out_rewards.append(r)
-        if r > 0:
-            n_with_reward += 1
-        try:
-            s["env"].client.close()
-        except Exception:
-            pass
-
-    print(f"[rollout_func] Done: {n_with_reward}/{len(states)} rollouts got non-zero reward")
-
-    return {
-        "prompt_ids": out_prompt_ids,
-        "completion_ids": out_completion_ids,
-        "logprobs": out_logprobs,
-        "env_mask": out_env_mask,
-        "env_reward_value": out_rewards,
-    }
-
-
-# %% [markdown]
 # ## 8. GRPO config + trainer
 
 # %%
@@ -656,10 +407,12 @@ config = GRPOConfig(
     num_train_epochs=1,
     learning_rate=1e-5,                 # gentler than SFT's 2e-4
     per_device_train_batch_size=1,
-    gradient_accumulation_steps=8,
-    num_generations=2,                  # 2 rollouts per prompt; bump to 4 if Space concurrency allows
-    max_completion_length=4096,         # per-turn cap; rollout_func loops ≤12 turns so total can exceed this
-    vllm_max_model_length=16384,        # context window: prompt + completion + env-feedback growth across 12 turns
+    gradient_accumulation_steps=4,      # 4 prompts × 2 gens = 8 rollouts/step (fits 40GB w/ vLLM colocate)
+    num_generations=2,
+    max_completion_length=2048,         # cumulative assistant tokens across all tool-call turns
+    vllm_max_model_length=10240,        # prompt + completion + env-feedback growth across ≤12 turns
+    vllm_gpu_memory_utilization=0.22,   # leave more VRAM for trainer forward pass
+    max_tool_calling_iterations=12,     # cap multi-turn rollouts (env's MAX_STEPS=15 is the hard ceiling)
     temperature=0.8,
     bf16=True,
     gradient_checkpointing=True,
@@ -681,13 +434,13 @@ config = GRPOConfig(
     seed=42,
 )
 
-print("Creating GRPOTrainer with custom rollout_func (markdown JSON tool-call parser)...")
+print("Creating GRPOTrainer with environment_factory=OfficeDocumentEnv...")
 trainer = GRPOTrainer(
     model=model,
     args=config,
     train_dataset=train_ds,
     reward_funcs=env_reward,
-    rollout_func=rollout_func,                # ← we drive the multi-turn loop ourselves
+    environment_factory=OfficeDocumentEnv,    # ← TRL handles the multi-turn loop + XML tool-call parsing
     processing_class=tokenizer,
 )
 
