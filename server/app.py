@@ -354,26 +354,19 @@ def _html_escape(s: str) -> str:
              .replace('"', "&quot;").replace("'", "&#39;"))
 
 
-def _render_replay_section(family: str, info: Dict[str, Any]) -> str:
-    """Full replay HTML block for one family's best Kimi run."""
-    task_id = info["task_id"]
-    score = info["score"]
-    tag = info["primary_tag"]
-    instruction = info["instruction"]
-    traj = _load_trajectory(task_id)
-    if not traj:
-        return f'<p class="muted">No trajectory available for {task_id}.</p>'
-
+def _render_replay_header(family: str, info: Dict[str, Any], n_steps: int) -> str:
+    """Compact header for one replay (task id, score, instruction)."""
     fam_label = {"xlsx": "Excel", "docx": "Word", "pptx": "PowerPoint"}.get(family, family)
-    header = f"""
+    instruction = info["instruction"]
+    return f"""
 <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;
             padding:1rem;margin-bottom:1rem">
-  <div style="display:flex;justify-content:space-between">
+  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
     <div>
-      <strong>📄 {fam_label} ({family})</strong> · task <code>{task_id}</code>
-      <span style="color:#64748b">· {tag}</span>
+      <strong>📄 {fam_label} ({family})</strong> · task <code>{info["task_id"]}</code>
+      <span style="color:#64748b">· {info["primary_tag"]}</span>
     </div>
-    <div><strong>Final score: {score:.3f}</strong> · {len(traj)} steps</div>
+    <div><strong>Final score: {info["score"]:.3f}</strong> · {n_steps} steps</div>
   </div>
   <div style="color:#475569;font-size:.92em;margin-top:.5rem">
     <strong>Instruction:</strong> {_html_escape(instruction[:600])}
@@ -381,10 +374,113 @@ def _render_replay_section(family: str, info: Dict[str, Any]) -> str:
   </div>
 </div>
 """
-    steps_html = ""
-    for i, step in enumerate(traj, start=1):
-        steps_html += _render_step_html(step, i)
-    return header + steps_html
+
+
+def build_interactive_replay(family: str, info: Dict[str, Any]) -> None:
+    """Build a Prev/Next/Play interactive replay for one family inside the
+    current Gradio Blocks context.  Each step pages in on its own — no
+    overwhelming wall of HTML for the 13-step xlsx run.
+    """
+    traj = _load_trajectory(info["task_id"])
+    if not traj:
+        gr.Markdown(f"_No trajectory available for {info['task_id']}._")
+        return
+    n = len(traj)
+
+    gr.HTML(_render_replay_header(family, info, n))
+
+    # Per-replay state: current step index (0-based)
+    state = gr.State(0)
+
+    with gr.Row():
+        first_btn = gr.Button("⏮ First", scale=1, size="sm")
+        prev_btn = gr.Button("◀ Previous", scale=1, size="sm")
+        play_btn = gr.Button("▶ Play", scale=1, size="sm", variant="primary")
+        next_btn = gr.Button("Next ▶", scale=1, size="sm")
+        last_btn = gr.Button("Last ⏭", scale=1, size="sm")
+    counter = gr.Markdown(f"**Step 1 / {n}**")
+    display = gr.HTML(_render_step_html(traj[0], 1))
+
+    # Auto-advance timer (paused by default).  Tick interval picked so a
+    # viewer has ~3.5s to read each step; can be tweaked.
+    timer = gr.Timer(value=3.5, active=False)
+
+    def go_to(target_idx: int):
+        target_idx = max(0, min(target_idx, n - 1))
+        return (
+            target_idx,
+            _render_step_html(traj[target_idx], target_idx + 1),
+            f"**Step {target_idx + 1} / {n}**",
+        )
+
+    def go_relative(current_idx: int, delta: int):
+        return go_to(current_idx + delta)
+
+    def play_advance(current_idx: int):
+        # Auto-advance one step.  Stop the timer if we're already at the end.
+        if current_idx >= n - 1:
+            return current_idx, gr.update(), gr.update(), gr.Timer(active=False), gr.update(value="▶ Play")
+        new_idx = current_idx + 1
+        # If we'll be on the last step after this advance, stop the timer too
+        # so it doesn't fire one more useless tick.
+        new_active = new_idx < n - 1
+        return (
+            new_idx,
+            _render_step_html(traj[new_idx], new_idx + 1),
+            f"**Step {new_idx + 1} / {n}**",
+            gr.Timer(active=new_active),
+            gr.update(value="▶ Play" if not new_active else "⏸ Pause"),
+        )
+
+    def toggle_play(current_idx: int, current_label: str):
+        # If at the end, restart from beginning before playing
+        if current_idx >= n - 1:
+            return (
+                0,
+                _render_step_html(traj[0], 1),
+                f"**Step 1 / {n}**",
+                gr.Timer(active=True),
+                gr.update(value="⏸ Pause"),
+            )
+        # Toggle: if currently paused → play; if playing → pause
+        is_playing = "Pause" in current_label
+        new_active = not is_playing
+        return (
+            current_idx,
+            gr.update(),
+            gr.update(),
+            gr.Timer(active=new_active),
+            gr.update(value="⏸ Pause" if new_active else "▶ Play"),
+        )
+
+    first_btn.click(
+        lambda: go_to(0),
+        outputs=[state, display, counter],
+    )
+    prev_btn.click(
+        lambda i: go_relative(i, -1),
+        inputs=state,
+        outputs=[state, display, counter],
+    )
+    next_btn.click(
+        lambda i: go_relative(i, 1),
+        inputs=state,
+        outputs=[state, display, counter],
+    )
+    last_btn.click(
+        lambda: go_to(n - 1),
+        outputs=[state, display, counter],
+    )
+    play_btn.click(
+        toggle_play,
+        inputs=[state, play_btn],
+        outputs=[state, display, counter, timer, play_btn],
+    )
+    timer.tick(
+        play_advance,
+        inputs=state,
+        outputs=[state, display, counter, timer, play_btn],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -641,7 +737,7 @@ def build_dashboard() -> gr.Blocks:
                 f"{fam_label} — task {info['task_id']} (score {info['score']:.3f})",
                 open=(fam == "docx"),  # default-open the shortest one
             ):
-                gr.HTML(_render_replay_section(fam, info))
+                build_interactive_replay(fam, info)
 
         # ---- File upload demo ----
         gr.Markdown("## 🗂️ Try your own task")
