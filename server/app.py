@@ -409,8 +409,24 @@ def build_dashboard() -> gr.Blocks:
 
 # Build + mount.  Gradio wraps itself as a sub-app inside FastAPI; the
 # OpenEnv playground at /web is unaffected.
+#
+# `root_path="/dashboard"` is critical when mounted at a sub-path: Gradio
+# generates static-asset and websocket URLs relative to `root_path`, so
+# without it the iframe loads but every CSS/JS/WS request 404s and the
+# page renders blank.
 demo = build_dashboard()
-app = gr.mount_gradio_app(app, demo, path="/dashboard")
+app = gr.mount_gradio_app(app, demo, path="/dashboard", root_path="/dashboard")
+
+
+# Redirect bare / to the dashboard so visitors landing on the root URL
+# (anyone clicking the Space link) get the rich UI by default.  /web still
+# serves the OpenEnv playground untouched.
+from fastapi.responses import RedirectResponse  # noqa: E402
+
+
+@app.get("/")
+def _root():
+    return RedirectResponse(url="/dashboard")
 
 
 def main() -> None:
