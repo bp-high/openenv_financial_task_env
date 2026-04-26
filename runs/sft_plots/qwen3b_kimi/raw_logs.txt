@@ -1,0 +1,764 @@
+debconf: delaying package configuration, since apt-utils is not installed
+Selecting previously unselected package less.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 14910 files and directories currently installed.)
+Preparing to unpack .../00-less_590-1ubuntu0.22.04.3_amd64.deb ...
+Unpacking less (590-1ubuntu0.22.04.3) ...
+Selecting previously unselected package libmd0:amd64.
+Preparing to unpack .../01-libmd0_1.0.4-1build1_amd64.deb ...
+Unpacking libmd0:amd64 (1.0.4-1build1) ...
+Selecting previously unselected package libbsd0:amd64.
+Preparing to unpack .../02-libbsd0_0.11.5-1_amd64.deb ...
+Unpacking libbsd0:amd64 (0.11.5-1) ...
+Selecting previously unselected package libexpat1:amd64.
+Preparing to unpack .../03-libexpat1_2.4.7-1ubuntu0.7_amd64.deb ...
+Unpacking libexpat1:amd64 (2.4.7-1ubuntu0.7) ...
+Selecting previously unselected package libcbor0.8:amd64.
+Preparing to unpack .../04-libcbor0.8_0.8.0-2ubuntu1_amd64.deb ...
+Unpacking libcbor0.8:amd64 (0.8.0-2ubuntu1) ...
+Selecting previously unselected package libedit2:amd64.
+Preparing to unpack .../05-libedit2_3.1-20210910-1build1_amd64.deb ...
+Unpacking libedit2:amd64 (3.1-20210910-1build1) ...
+Selecting previously unselected package libfido2-1:amd64.
+Preparing to unpack .../06-libfido2-1_1.10.0-1_amd64.deb ...
+Unpacking libfido2-1:amd64 (1.10.0-1) ...
+Selecting previously unselected package libnghttp2-14:amd64.
+Preparing to unpack .../07-libnghttp2-14_1.43.0-1ubuntu0.2_amd64.deb ...
+Unpacking libnghttp2-14:amd64 (1.43.0-1ubuntu0.2) ...
+Selecting previously unselected package libpsl5:amd64.
+Preparing to unpack .../08-libpsl5_0.21.0-1.2build2_amd64.deb ...
+Unpacking libpsl5:amd64 (0.21.0-1.2build2) ...
+Selecting previously unselected package libxau6:amd64.
+Preparing to unpack .../09-libxau6_1%3a1.0.9-1build5_amd64.deb ...
+Unpacking libxau6:amd64 (1:1.0.9-1build5) ...
+Selecting previously unselected package libxdmcp6:amd64.
+Preparing to unpack .../10-libxdmcp6_1%3a1.1.3-0ubuntu5_amd64.deb ...
+Unpacking libxdmcp6:amd64 (1:1.1.3-0ubuntu5) ...
+Selecting previously unselected package libxcb1:amd64.
+Preparing to unpack .../11-libxcb1_1.14-3ubuntu3_amd64.deb ...
+Unpacking libxcb1:amd64 (1.14-3ubuntu3) ...
+Selecting previously unselected package libx11-data.
+Preparing to unpack .../12-libx11-data_2%3a1.7.5-1ubuntu0.3_all.deb ...
+Unpacking libx11-data (2:1.7.5-1ubuntu0.3) ...
+Selecting previously unselected package libx11-6:amd64.
+Preparing to unpack .../13-libx11-6_2%3a1.7.5-1ubuntu0.3_amd64.deb ...
+Unpacking libx11-6:amd64 (2:1.7.5-1ubuntu0.3) ...
+Selecting previously unselected package libxext6:amd64.
+Preparing to unpack .../14-libxext6_2%3a1.3.4-1build1_amd64.deb ...
+Unpacking libxext6:amd64 (2:1.3.4-1build1) ...
+Selecting previously unselected package libxmuu1:amd64.
+Preparing to unpack .../15-libxmuu1_2%3a1.1.3-3_amd64.deb ...
+Unpacking libxmuu1:amd64 (2:1.1.3-3) ...
+Selecting previously unselected package openssh-client.
+Preparing to unpack .../16-openssh-client_1%3a8.9p1-3ubuntu0.14_amd64.deb ...
+Unpacking openssh-client (1:8.9p1-3ubuntu0.14) ...
+Selecting previously unselected package publicsuffix.
+Preparing to unpack .../17-publicsuffix_20211207.1025-1_all.deb ...
+Unpacking publicsuffix (20211207.1025-1) ...
+Selecting previously unselected package xauth.
+Preparing to unpack .../18-xauth_1%3a1.1-1build2_amd64.deb ...
+Unpacking xauth (1:1.1-1build2) ...
+Selecting previously unselected package libbrotli1:amd64.
+Preparing to unpack .../19-libbrotli1_1.0.9-2build6_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.0.9-2build6) ...
+Selecting previously unselected package librtmp1:amd64.
+Preparing to unpack .../20-librtmp1_2.4+20151223.gitfa8646d.1-2build4_amd64.deb ...
+Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build4) ...
+Selecting previously unselected package libssh-4:amd64.
+Preparing to unpack .../21-libssh-4_0.9.6-2ubuntu0.22.04.7_amd64.deb ...
+Unpacking libssh-4:amd64 (0.9.6-2ubuntu0.22.04.7) ...
+Selecting previously unselected package libcurl3-gnutls:amd64.
+Preparing to unpack .../22-libcurl3-gnutls_7.81.0-1ubuntu1.23_amd64.deb ...
+Unpacking libcurl3-gnutls:amd64 (7.81.0-1ubuntu1.23) ...
+Selecting previously unselected package liberror-perl.
+Preparing to unpack .../23-liberror-perl_0.17029-1_all.deb ...
+Unpacking liberror-perl (0.17029-1) ...
+Selecting previously unselected package git-man.
+Preparing to unpack .../24-git-man_1%3a2.34.1-1ubuntu1.17_all.deb ...
+Unpacking git-man (1:2.34.1-1ubuntu1.17) ...
+Selecting previously unselected package git.
+Preparing to unpack .../25-git_1%3a2.34.1-1ubuntu1.17_amd64.deb ...
+Unpacking git (1:2.34.1-1ubuntu1.17) ...
+Setting up libexpat1:amd64 (2.4.7-1ubuntu0.7) ...
+Setting up libxau6:amd64 (1:1.0.9-1build5) ...
+Setting up libpsl5:amd64 (0.21.0-1.2build2) ...
+Setting up libcbor0.8:amd64 (0.8.0-2ubuntu1) ...
+Setting up libbrotli1:amd64 (1.0.9-2build6) ...
+Setting up libnghttp2-14:amd64 (1.43.0-1ubuntu0.2) ...
+Setting up less (590-1ubuntu0.22.04.3) ...
+Setting up liberror-perl (0.17029-1) ...
+Setting up libx11-data (2:1.7.5-1ubuntu0.3) ...
+Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build4) ...
+Setting up libssh-4:amd64 (0.9.6-2ubuntu0.22.04.7) ...
+Setting up libmd0:amd64 (1.0.4-1build1) ...
+Setting up git-man (1:2.34.1-1ubuntu1.17) ...
+Setting up libfido2-1:amd64 (1.10.0-1) ...
+Setting up libbsd0:amd64 (0.11.5-1) ...
+Setting up publicsuffix (20211207.1025-1) ...
+Setting up libxdmcp6:amd64 (1:1.1.3-0ubuntu5) ...
+Setting up libxcb1:amd64 (1.14-3ubuntu3) ...
+Setting up libedit2:amd64 (3.1-20210910-1build1) ...
+Setting up libcurl3-gnutls:amd64 (7.81.0-1ubuntu1.23) ...
+Setting up git (1:2.34.1-1ubuntu1.17) ...
+Setting up libx11-6:amd64 (2:1.7.5-1ubuntu0.3) ...
+Setting up libxmuu1:amd64 (2:1.1.3-3) ...
+Setting up openssh-client (1:8.9p1-3ubuntu0.14) ...
+update-alternatives: using /usr/bin/ssh to provide /usr/bin/rsh (rsh) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/rsh.1.gz because associated file /usr/share/man/man1/ssh.1.gz (of link group rsh) doesn't exist
+update-alternatives: using /usr/bin/slogin to provide /usr/bin/rlogin (rlogin) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/rlogin.1.gz because associated file /usr/share/man/man1/slogin.1.gz (of link group rlogin) doesn't exist
+update-alternatives: using /usr/bin/scp to provide /usr/bin/rcp (rcp) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/rcp.1.gz because associated file /usr/share/man/man1/scp.1.gz (of link group rcp) doesn't exist
+Setting up libxext6:amd64 (2:1.3.4-1build1) ...
+Setting up xauth (1:1.1-1build2) ...
+Processing triggers for libc-bin (2.35-0ubuntu3.6) ...
+Cloning into '/work'...
+Collecting trl>=0.11
+  Downloading trl-1.2.0-py3-none-any.whl.metadata (11 kB)
+Collecting peft
+  Downloading peft-0.19.1-py3-none-any.whl.metadata (15 kB)
+Collecting accelerate
+  Downloading accelerate-1.13.0-py3-none-any.whl.metadata (19 kB)
+Collecting bitsandbytes
+  Downloading bitsandbytes-0.49.2-py3-none-manylinux_2_24_x86_64.whl.metadata (10 kB)
+Collecting datasets>=4.7.0 (from trl>=0.11)
+  Downloading datasets-4.8.4-py3-none-any.whl.metadata (19 kB)
+Requirement already satisfied: jinja2 in /opt/conda/lib/python3.11/site-packages (from trl>=0.11) (3.1.5)
+Requirement already satisfied: packaging>20.0 in /opt/conda/lib/python3.11/site-packages (from trl>=0.11) (24.2)
+Collecting transformers>=4.56.2 (from trl>=0.11)
+  Downloading transformers-5.6.2-py3-none-any.whl.metadata (33 kB)
+Requirement already satisfied: numpy>=1.17 in /opt/conda/lib/python3.11/site-packages (from peft) (2.2.2)
+Requirement already satisfied: psutil in /opt/conda/lib/python3.11/site-packages (from peft) (6.1.1)
+Requirement already satisfied: pyyaml in /opt/conda/lib/python3.11/site-packages (from peft) (6.0.2)
+Requirement already satisfied: torch>=1.13.0 in /opt/conda/lib/python3.11/site-packages (from peft) (2.6.0+cu124)
+Requirement already satisfied: tqdm in /opt/conda/lib/python3.11/site-packages (from peft) (4.67.1)
+Collecting safetensors (from peft)
+  Downloading safetensors-0.7.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+Collecting huggingface_hub>=0.25.0 (from peft)
+  Downloading huggingface_hub-1.12.0-py3-none-any.whl.metadata (14 kB)
+Requirement already satisfied: filelock in /opt/conda/lib/python3.11/site-packages (from datasets>=4.7.0->trl>=0.11) (3.17.0)
+Collecting pyarrow>=21.0.0 (from datasets>=4.7.0->trl>=0.11)
+  Downloading pyarrow-24.0.0-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (3.0 kB)
+Collecting dill<0.4.2,>=0.3.0 (from datasets>=4.7.0->trl>=0.11)
+  Downloading dill-0.4.1-py3-none-any.whl.metadata (10 kB)
+Collecting pandas (from datasets>=4.7.0->trl>=0.11)
+  Downloading pandas-3.0.2-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (79 kB)
+Requirement already satisfied: requests>=2.32.2 in /opt/conda/lib/python3.11/site-packages (from datasets>=4.7.0->trl>=0.11) (2.32.3)
+Collecting httpx<1.0.0 (from datasets>=4.7.0->trl>=0.11)
+  Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+Collecting xxhash (from datasets>=4.7.0->trl>=0.11)
+  Downloading xxhash-3.7.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (13 kB)
+Collecting multiprocess<0.70.20 (from datasets>=4.7.0->trl>=0.11)
+  Downloading multiprocess-0.70.19-py311-none-any.whl.metadata (7.5 kB)
+Requirement already satisfied: fsspec<=2026.2.0,>=2023.1.0 in /opt/conda/lib/python3.11/site-packages (from fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=4.7.0->trl>=0.11) (2024.12.0)
+Collecting hf-xet<2.0.0,>=1.4.3 (from huggingface_hub>=0.25.0->peft)
+  Downloading hf_xet-1.4.3-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (4.9 kB)
+Collecting typer (from huggingface_hub>=0.25.0->peft)
+  Downloading typer-0.24.2-py3-none-any.whl.metadata (15 kB)
+Requirement already satisfied: typing-extensions>=4.1.0 in /opt/conda/lib/python3.11/site-packages (from huggingface_hub>=0.25.0->peft) (4.12.2)
+Requirement already satisfied: networkx in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (3.4.2)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.4.127 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (12.4.127)
+Requirement already satisfied: nvidia-cuda-runtime-cu12==12.4.127 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (12.4.127)
+Requirement already satisfied: nvidia-cuda-cupti-cu12==12.4.127 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (12.4.127)
+Requirement already satisfied: nvidia-cudnn-cu12==9.1.0.70 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (9.1.0.70)
+Requirement already satisfied: nvidia-cublas-cu12==12.4.5.8 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (12.4.5.8)
+Requirement already satisfied: nvidia-cufft-cu12==11.2.1.3 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (11.2.1.3)
+Requirement already satisfied: nvidia-curand-cu12==10.3.5.147 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (10.3.5.147)
+Requirement already satisfied: nvidia-cusolver-cu12==11.6.1.9 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (11.6.1.9)
+Requirement already satisfied: nvidia-cusparse-cu12==12.3.1.170 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (12.3.1.170)
+Requirement already satisfied: nvidia-cusparselt-cu12==0.6.2 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (0.6.2)
+Requirement already satisfied: nvidia-nccl-cu12==2.21.5 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (2.21.5)
+Requirement already satisfied: nvidia-nvtx-cu12==12.4.127 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (12.4.127)
+Requirement already satisfied: nvidia-nvjitlink-cu12==12.4.127 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (12.4.127)
+Requirement already satisfied: triton==3.2.0 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (3.2.0)
+Requirement already satisfied: sympy==1.13.1 in /opt/conda/lib/python3.11/site-packages (from torch>=1.13.0->peft) (1.13.1)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /opt/conda/lib/python3.11/site-packages (from sympy==1.13.1->torch>=1.13.0->peft) (1.3.0)
+Collecting regex>=2025.10.22 (from transformers>=4.56.2->trl>=0.11)
+  Downloading regex-2026.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+Collecting tokenizers<=0.23.0,>=0.22.0 (from transformers>=4.56.2->trl>=0.11)
+  Downloading tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+Requirement already satisfied: MarkupSafe>=2.0 in /opt/conda/lib/python3.11/site-packages (from jinja2->trl>=0.11) (3.0.2)
+Collecting aiohttp!=4.0.0a0,!=4.0.0a1 (from fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=4.7.0->trl>=0.11)
+  Downloading aiohttp-3.13.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+Collecting anyio (from httpx<1.0.0->datasets>=4.7.0->trl>=0.11)
+  Downloading anyio-4.13.0-py3-none-any.whl.metadata (4.5 kB)
+Requirement already satisfied: certifi in /opt/conda/lib/python3.11/site-packages (from httpx<1.0.0->datasets>=4.7.0->trl>=0.11) (2024.12.14)
+Collecting httpcore==1.* (from httpx<1.0.0->datasets>=4.7.0->trl>=0.11)
+  Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+Requirement already satisfied: idna in /opt/conda/lib/python3.11/site-packages (from httpx<1.0.0->datasets>=4.7.0->trl>=0.11) (3.10)
+Collecting h11>=0.16 (from httpcore==1.*->httpx<1.0.0->datasets>=4.7.0->trl>=0.11)
+  Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+Requirement already satisfied: charset_normalizer<4,>=2 in /opt/conda/lib/python3.11/site-packages (from requests>=2.32.2->datasets>=4.7.0->trl>=0.11) (3.4.1)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /opt/conda/lib/python3.11/site-packages (from requests>=2.32.2->datasets>=4.7.0->trl>=0.11) (2.3.0)
+Collecting python-dateutil>=2.8.2 (from pandas->datasets>=4.7.0->trl>=0.11)
+  Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+Collecting click>=8.2.1 (from typer->huggingface_hub>=0.25.0->peft)
+  Downloading click-8.3.3-py3-none-any.whl.metadata (2.6 kB)
+Collecting shellingham>=1.3.0 (from typer->huggingface_hub>=0.25.0->peft)
+  Downloading shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+Collecting rich>=12.3.0 (from typer->huggingface_hub>=0.25.0->peft)
+  Downloading rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+Collecting annotated-doc>=0.0.2 (from typer->huggingface_hub>=0.25.0->peft)
+  Downloading annotated_doc-0.0.4-py3-none-any.whl.metadata (6.6 kB)
+Collecting aiohappyeyeballs>=2.5.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=4.7.0->trl>=0.11)
+  Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+Collecting aiosignal>=1.4.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=4.7.0->trl>=0.11)
+  Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+Requirement already satisfied: attrs>=17.3.0 in /opt/conda/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=4.7.0->trl>=0.11) (25.1.0)
+Collecting frozenlist>=1.1.1 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=4.7.0->trl>=0.11)
+  Downloading frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+Collecting multidict<7.0,>=4.5 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=4.7.0->trl>=0.11)
+  Downloading multidict-6.7.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+Collecting propcache>=0.2.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=4.7.0->trl>=0.11)
+  Downloading propcache-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (13 kB)
+Collecting yarl<2.0,>=1.17.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=4.7.0->trl>=0.11)
+  Downloading yarl-1.23.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (79 kB)
+Requirement already satisfied: six>=1.5 in /opt/conda/lib/python3.11/site-packages (from python-dateutil>=2.8.2->pandas->datasets>=4.7.0->trl>=0.11) (1.17.0)
+Collecting markdown-it-py>=2.2.0 (from rich>=12.3.0->typer->huggingface_hub>=0.25.0->peft)
+  Downloading markdown_it_py-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /opt/conda/lib/python3.11/site-packages (from rich>=12.3.0->typer->huggingface_hub>=0.25.0->peft) (2.19.1)
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=12.3.0->typer->huggingface_hub>=0.25.0->peft)
+  Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+Downloading trl-1.2.0-py3-none-any.whl (697 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 697.4/697.4 kB 144.8 MB/s eta 0:00:00
+Downloading peft-0.19.1-py3-none-any.whl (680 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 680.7/680.7 kB 201.5 MB/s eta 0:00:00
+Downloading accelerate-1.13.0-py3-none-any.whl (383 kB)
+Downloading bitsandbytes-0.49.2-py3-none-manylinux_2_24_x86_64.whl (60.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.7/60.7 MB 116.0 MB/s eta 0:00:00
+Downloading datasets-4.8.4-py3-none-any.whl (526 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 527.0/527.0 kB 143.2 MB/s eta 0:00:00
+Downloading huggingface_hub-1.12.0-py3-none-any.whl (646 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 646.8/646.8 kB 162.9 MB/s eta 0:00:00
+Downloading safetensors-0.7.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (507 kB)
+Downloading transformers-5.6.2-py3-none-any.whl (10.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.4/10.4 MB 301.2 MB/s eta 0:00:00
+Downloading dill-0.4.1-py3-none-any.whl (120 kB)
+Downloading hf_xet-1.4.3-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.2/4.2 MB 294.9 MB/s eta 0:00:00
+Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+Downloading multiprocess-0.70.19-py311-none-any.whl (144 kB)
+Downloading pyarrow-24.0.0-cp311-cp311-manylinux_2_28_x86_64.whl (48.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.8/48.8 MB 270.4 MB/s eta 0:00:00
+Downloading regex-2026.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (799 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 799.8/799.8 kB 161.3 MB/s eta 0:00:00
+Downloading tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 329.5 MB/s eta 0:00:00
+Downloading pandas-3.0.2-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (11.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.3/11.3 MB 349.1 MB/s eta 0:00:00
+Downloading typer-0.24.2-py3-none-any.whl (55 kB)
+Downloading xxhash-3.7.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (193 kB)
+Downloading aiohttp-3.13.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 218.6 MB/s eta 0:00:00
+Downloading annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+Downloading click-8.3.3-py3-none-any.whl (110 kB)
+Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+Downloading anyio-4.13.0-py3-none-any.whl (114 kB)
+Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)
+Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+Downloading frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (231 kB)
+Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+Downloading multidict-6.7.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (246 kB)
+Downloading propcache-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (210 kB)
+Downloading yarl-1.23.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (102 kB)
+Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Installing collected packages: xxhash, shellingham, safetensors, regex, python-dateutil, pyarrow, propcache, multidict, mdurl, hf-xet, h11, frozenlist, dill, click, anyio, annotated-doc, aiohappyeyeballs, yarl, pandas, multiprocess, markdown-it-py, httpcore, aiosignal, rich, httpx, aiohttp, typer, bitsandbytes, huggingface_hub, tokenizers, datasets, accelerate, transformers, trl, peft
+  Attempting uninstall: click
+    Found existing installation: click 8.1.8
+    Uninstalling click-8.1.8:
+      Successfully uninstalled click-8.1.8
+Successfully installed accelerate-1.13.0 aiohappyeyeballs-2.6.1 aiohttp-3.13.5 aiosignal-1.4.0 annotated-doc-0.0.4 anyio-4.13.0 bitsandbytes-0.49.2 click-8.3.3 datasets-4.8.4 dill-0.4.1 frozenlist-1.8.0 h11-0.16.0 hf-xet-1.4.3 httpcore-1.0.9 httpx-0.28.1 huggingface_hub-1.12.0 markdown-it-py-4.0.0 mdurl-0.1.2 multidict-6.7.1 multiprocess-0.70.19 pandas-3.0.2 peft-0.19.1 propcache-0.4.1 pyarrow-24.0.0 python-dateutil-2.9.0.post0 regex-2026.4.4 rich-15.0.0 safetensors-0.7.0 shellingham-1.5.4 tokenizers-0.22.2 transformers-5.6.2 trl-1.2.0 typer-0.24.2 xxhash-3.7.0 yarl-1.23.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+Loading SFT corpus from data/sft_kimi_k25.jsonl
+
+Generating train split: 0 examples [00:00, ? examples/s][AGenerating train split: 53 examples [00:00, 11304.25 examples/s]
+  rows: 53
+  cols: ['task_id', 'family', 'primary_tag', 'split', 'score', 'n_steps', 'messages']
+
+Loading tokenizer: Qwen/Qwen2.5-Coder-3B-Instruct
+
+config.json:   0%|          | 0.00/661 [00:00<?, ?B/s][Aconfig.json: 100%|██████████| 661/661 [00:00<00:00, 3.00MB/s]
+
+tokenizer_config.json:   0%|          | 0.00/7.30k [00:00<?, ?B/s][Atokenizer_config.json: 100%|██████████| 7.30k/7.30k [00:00<00:00, 44.7MB/s]
+
+vocab.json:   0%|          | 0.00/2.78M [00:00<?, ?B/s][Avocab.json: 100%|██████████| 2.78M/2.78M [00:00<00:00, 30.0MB/s]
+
+merges.txt:   0%|          | 0.00/1.67M [00:00<?, ?B/s][Amerges.txt: 100%|██████████| 1.67M/1.67M [00:00<00:00, 93.4MB/s]
+
+tokenizer.json:   0%|          | 0.00/7.03M [00:00<?, ?B/s][Atokenizer.json: 100%|██████████| 7.03M/7.03M [00:00<00:00, 66.5MB/s]
+Loading base model: Qwen/Qwen2.5-Coder-3B-Instruct
+  precision: bf16  (cuda=True, mps=False)
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+model.safetensors.index.json:   0%|          | 0.00/35.6k [00:00<?, ?B/s][Amodel.safetensors.index.json: 100%|██████████| 35.6k/35.6k [00:00<00:00, 137MB/s]
+
+Downloading (incomplete total...): 0.00B [00:00, ?B/s][A
+Fetching 2 files:   0%|          | 0/2 [00:00<?, ?it/s][A
+Downloading (incomplete total...):   0%|          | 0.00/4.96G [00:00<?, ?B/s][A
+Downloading (incomplete total...):   0%|          | 0.00/6.17G [00:00<?, ?B/s][A
+Downloading (incomplete total...):   0%|          | 0.00/6.17G [00:01<?, ?B/s][A
+Downloading (incomplete total...):   1%|          | 67.1M/6.17G [00:02<01:31, 67.1MB/s][A
+Downloading (incomplete total...):  11%|█         | 670M/6.17G [00:03<00:14, 381MB/s]  [A
+Downloading (incomplete total...):  20%|█▉        | 1.21G/6.17G [00:04<00:10, 452MB/s][A
+Downloading (incomplete total...):  39%|███▊      | 2.38G/6.17G [00:05<00:05, 685MB/s][A
+Downloading (incomplete total...):  55%|█████▍    | 3.39G/6.17G [00:06<00:03, 795MB/s][A
+Downloading (incomplete total...):  69%|██████▉   | 4.26G/6.17G [00:07<00:02, 820MB/s][A
+Downloading (incomplete total...):  85%|████████▌ | 5.27G/6.17G [00:08<00:01, 880MB/s][A
+Downloading (incomplete total...): 100%|██████████| 6.17G/6.17G [00:09<00:00, 888MB/s][A
+Fetching 2 files:  50%|█████     | 1/2 [00:09<00:09,  9.35s/it][AFetching 2 files: 100%|██████████| 2/2 [00:09<00:00,  4.67s/it]
+
+Download complete: 100%|██████████| 6.17G/6.17G [00:09<00:00, 888MB/s]                [ADownload complete: 100%|██████████| 6.17G/6.17G [00:09<00:00, 659MB/s]
+
+Loading weights:   0%|          | 0/434 [00:00<?, ?it/s][ALoading weights: 100%|██████████| 434/434 [00:00<00:00, 5179.73it/s]
+
+generation_config.json:   0%|          | 0.00/243 [00:00<?, ?B/s][Ageneration_config.json: 100%|██████████| 243/243 [00:00<00:00, 1.56MB/s]
+[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
+
+Starting SFTTrainer...
+
+Tokenizing train dataset:   0%|          | 0/53 [00:00<?, ? examples/s][ATokenizing train dataset: 100%|██████████| 53/53 [00:00<00:00, 83.58 examples/s]
+[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'bos_token_id': None, 'pad_token_id': 151643}.
+
+  0%|          | 0/108 [00:00<?, ?it/s][A
+  1%|          | 1/108 [00:02<04:57,  2.78s/it][A
+  2%|▏         | 2/108 [00:04<03:48,  2.15s/it][A
+                                               [A
+{'loss': '0.4122', 'grad_norm': '0.4171', 'learning_rate': '3.333e-05', 'entropy': '0.6625', 'num_tokens': '1.464e+04', 'mean_token_accuracy': '0.9006', 'epoch': '0.07547'}
+  2%|▏         | 2/108 [00:04<03:48,  2.15s/it][A
+  3%|▎         | 3/108 [00:06<03:48,  2.17s/it][A
+{'loss': '0.3891', 'grad_norm': '0.3506', 'learning_rate': '0.0001', 'entropy': '0.7145', 'num_tokens': '2.879e+04', 'mean_token_accuracy': '0.8935', 'epoch': '0.1509'}
+  4%|▎         | 4/108 [00:08<03:20,  1.93s/it][A
+                                               [A
+  4%|▎         | 4/108 [00:08<03:20,  1.93s/it][A
+  5%|▍         | 5/108 [00:09<03:10,  1.85s/it][A
+  6%|▌         | 6/108 [00:12<03:20,  1.97s/it][A
+{'loss': '0.4281', 'grad_norm': '0.3258', 'learning_rate': '0.0001667', 'entropy': '0.7594', 'num_tokens': '4.335e+04', 'mean_token_accuracy': '0.8608', 'epoch': '0.2264'}
+                                               [A
+  6%|▌         | 6/108 [00:12<03:20,  1.97s/it][A
+  6%|▋         | 7/108 [00:14<03:18,  1.96s/it][A
+  7%|▋         | 8/108 [00:15<02:49,  1.70s/it][A
+                                               [A
+{'loss': '0.2927', 'grad_norm': '0.2988', 'learning_rate': '0.000198', 'entropy': '0.8536', 'num_tokens': '5.51e+04', 'mean_token_accuracy': '0.9093', 'epoch': '0.3019'}
+  7%|▋         | 8/108 [00:15<02:49,  1.70s/it][A
+  8%|▊         | 9/108 [00:16<02:42,  1.64s/it][A
+  9%|▉         | 10/108 [00:18<02:53,  1.77s/it][A
+                                                [A
+{'loss': '0.4109', 'grad_norm': '0.3757', 'learning_rate': '0.0001941', 'entropy': '0.9161', 'num_tokens': '6.757e+04', 'mean_token_accuracy': '0.8952', 'epoch': '0.3774'}
+  9%|▉         | 10/108 [00:18<02:53,  1.77s/it][A
+ 10%|█         | 11/108 [00:20<02:45,  1.71s/it][A
+ 11%|█         | 12/108 [00:22<02:58,  1.86s/it][A
+                                                [A
+{'loss': '0.363', 'grad_norm': '0.3995', 'learning_rate': '0.0001902', 'entropy': '0.817', 'num_tokens': '8.167e+04', 'mean_token_accuracy': '0.9114', 'epoch': '0.4528'}
+ 11%|█         | 12/108 [00:22<02:58,  1.86s/it][A
+ 12%|█▏        | 13/108 [00:24<02:53,  1.83s/it][A
+{'loss': '0.2653', 'grad_norm': '0.2197', 'learning_rate': '0.0001863', 'entropy': '0.8434', 'num_tokens': '9.385e+04', 'mean_token_accuracy': '0.9252', 'epoch': '0.5283'}
+ 13%|█▎        | 14/108 [00:25<02:43,  1.73s/it][A
+                                                [A
+ 13%|█▎        | 14/108 [00:25<02:43,  1.73s/it][A
+ 14%|█▍        | 15/108 [00:27<02:39,  1.72s/it][A
+ 15%|█▍        | 16/108 [00:29<02:39,  1.73s/it][A
+                                                [A
+{'loss': '0.3632', 'grad_norm': '0.2852', 'learning_rate': '0.0001824', 'entropy': '0.7911', 'num_tokens': '1.068e+05', 'mean_token_accuracy': '0.901', 'epoch': '0.6038'}
+ 15%|█▍        | 16/108 [00:29<02:39,  1.73s/it][A
+ 16%|█▌        | 17/108 [00:31<02:39,  1.75s/it][A
+ 17%|█▋        | 18/108 [00:32<02:35,  1.73s/it][A
+                                                [A
+{'loss': '0.2847', 'grad_norm': '0.2419', 'learning_rate': '0.0001784', 'entropy': '0.7856', 'num_tokens': '1.199e+05', 'mean_token_accuracy': '0.9195', 'epoch': '0.6792'}
+ 17%|█▋        | 18/108 [00:32<02:35,  1.73s/it][A
+ 18%|█▊        | 19/108 [00:35<02:49,  1.91s/it][A
+ 19%|█▊        | 20/108 [00:37<02:56,  2.00s/it][A
+                                                [A
+{'loss': '0.3193', 'grad_norm': '0.2241', 'learning_rate': '0.0001745', 'entropy': '0.7378', 'num_tokens': '1.362e+05', 'mean_token_accuracy': '0.9054', 'epoch': '0.7547'}
+ 19%|█▊        | 20/108 [00:37<02:56,  2.00s/it][A
+ 19%|█▉        | 21/108 [00:38<02:44,  1.89s/it][A
+ 20%|██        | 22/108 [00:40<02:33,  1.79s/it][A
+{'loss': '0.3761', 'grad_norm': '0.2601', 'learning_rate': '0.0001706', 'entropy': '0.8234', 'num_tokens': '1.482e+05', 'mean_token_accuracy': '0.9025', 'epoch': '0.8302'}
+                                                [A
+ 20%|██        | 22/108 [00:40<02:33,  1.79s/it][A
+ 21%|██▏       | 23/108 [00:42<02:25,  1.71s/it][A
+{'loss': '0.493', 'grad_norm': '0.3316', 'learning_rate': '0.0001667', 'entropy': '0.9314', 'num_tokens': '1.598e+05', 'mean_token_accuracy': '0.8638', 'epoch': '0.9057'}
+ 22%|██▏       | 24/108 [00:43<02:23,  1.71s/it][A
+                                                [A
+ 22%|██▏       | 24/108 [00:43<02:23,  1.71s/it][A
+ 23%|██▎       | 25/108 [00:45<02:27,  1.77s/it][A
+ 24%|██▍       | 26/108 [00:47<02:36,  1.91s/it][A
+                                                [A
+{'loss': '0.303', 'grad_norm': '0.2701', 'learning_rate': '0.0001627', 'entropy': '0.6641', 'num_tokens': '1.751e+05', 'mean_token_accuracy': '0.9187', 'epoch': '0.9811'}
+ 24%|██▍       | 26/108 [00:47<02:36,  1.91s/it][A
+ 25%|██▌       | 27/108 [00:48<02:15,  1.67s/it][A
+{'loss': '0.1908', 'grad_norm': '0.299', 'learning_rate': '0.0001588', 'entropy': '0.7032', 'num_tokens': '1.853e+05', 'mean_token_accuracy': '0.9335', 'epoch': '1.038'}
+ 26%|██▌       | 28/108 [00:50<02:12,  1.66s/it][A
+                                                [A
+ 26%|██▌       | 28/108 [00:50<02:12,  1.66s/it][A
+ 27%|██▋       | 29/108 [00:52<02:26,  1.85s/it][A
+ 28%|██▊       | 30/108 [00:54<02:18,  1.77s/it][A
+                                                [A
+{'loss': '0.2051', 'grad_norm': '0.2762', 'learning_rate': '0.0001549', 'entropy': '0.7466', 'num_tokens': '1.994e+05', 'mean_token_accuracy': '0.9402', 'epoch': '1.113'}
+ 28%|██▊       | 30/108 [00:54<02:18,  1.77s/it][A
+ 29%|██▊       | 31/108 [00:56<02:17,  1.78s/it][A
+ 30%|██▉       | 32/108 [00:58<02:14,  1.77s/it][A
+                                                [A
+{'loss': '0.2663', 'grad_norm': '0.2264', 'learning_rate': '0.000151', 'entropy': '0.7181', 'num_tokens': '2.127e+05', 'mean_token_accuracy': '0.9294', 'epoch': '1.189'}
+ 30%|██▉       | 32/108 [00:58<02:14,  1.77s/it][A
+ 31%|███       | 33/108 [01:00<02:23,  1.91s/it][A
+ 31%|███▏      | 34/108 [01:01<02:01,  1.64s/it][A
+                                                [A
+{'loss': '0.256', 'grad_norm': '0.2896', 'learning_rate': '0.0001471', 'entropy': '0.7591', 'num_tokens': '2.249e+05', 'mean_token_accuracy': '0.924', 'epoch': '1.264'}
+ 31%|███▏      | 34/108 [01:01<02:01,  1.64s/it][A
+ 32%|███▏      | 35/108 [01:02<01:45,  1.45s/it][A
+ 33%|███▎      | 36/108 [01:04<01:54,  1.59s/it][A
+                                                [A
+{'loss': '0.3722', 'grad_norm': '0.2214', 'learning_rate': '0.0001431', 'entropy': '0.8107', 'num_tokens': '2.353e+05', 'mean_token_accuracy': '0.9139', 'epoch': '1.34'}
+ 33%|███▎      | 36/108 [01:04<01:54,  1.59s/it][A
+ 34%|███▍      | 37/108 [01:06<02:05,  1.77s/it][A
+ 35%|███▌      | 38/108 [01:08<02:05,  1.80s/it][A
+                                                [A
+{'loss': '0.2085', 'grad_norm': '0.3177', 'learning_rate': '0.0001392', 'entropy': '0.6698', 'num_tokens': '2.5e+05', 'mean_token_accuracy': '0.931', 'epoch': '1.415'}
+ 35%|███▌      | 38/108 [01:08<02:05,  1.80s/it][A
+ 36%|███▌      | 39/108 [01:10<02:12,  1.92s/it][A
+ 37%|███▋      | 40/108 [01:11<01:59,  1.75s/it][A
+                                                [A
+{'loss': '0.1881', 'grad_norm': '0.2648', 'learning_rate': '0.0001353', 'entropy': '0.665', 'num_tokens': '2.634e+05', 'mean_token_accuracy': '0.9458', 'epoch': '1.491'}
+ 37%|███▋      | 40/108 [01:11<01:59,  1.75s/it][A
+ 38%|███▊      | 41/108 [01:14<02:06,  1.89s/it][A
+ 39%|███▉      | 42/108 [01:16<02:11,  1.99s/it][A
+                                                [A
+{'loss': '0.2393', 'grad_norm': '0.3208', 'learning_rate': '0.0001314', 'entropy': '0.5311', 'num_tokens': '2.798e+05', 'mean_token_accuracy': '0.9345', 'epoch': '1.566'}
+ 39%|███▉      | 42/108 [01:16<02:11,  1.99s/it][A
+ 40%|███▉      | 43/108 [01:17<01:56,  1.79s/it][A
+{'loss': '0.2433', 'grad_norm': '0.3626', 'learning_rate': '0.0001275', 'entropy': '0.6433', 'num_tokens': '2.915e+05', 'mean_token_accuracy': '0.9309', 'epoch': '1.642'}
+ 41%|████      | 44/108 [01:19<01:54,  1.78s/it][A
+                                                [A
+ 41%|████      | 44/108 [01:19<01:54,  1.78s/it][A
+ 42%|████▏     | 45/108 [01:21<02:00,  1.91s/it][A
+ 43%|████▎     | 46/108 [01:23<01:51,  1.79s/it][A
+{'loss': '0.1586', 'grad_norm': '0.3966', 'learning_rate': '0.0001235', 'entropy': '0.7025', 'num_tokens': '3.048e+05', 'mean_token_accuracy': '0.9468', 'epoch': '1.717'}
+                                                [A
+ 43%|████▎     | 46/108 [01:23<01:51,  1.79s/it][A
+ 44%|████▎     | 47/108 [01:25<01:57,  1.92s/it][A
+ 44%|████▍     | 48/108 [01:27<02:02,  2.04s/it][A
+{'loss': '0.1552', 'grad_norm': '0.2389', 'learning_rate': '0.0001196', 'entropy': '0.7335', 'num_tokens': '3.212e+05', 'mean_token_accuracy': '0.9479', 'epoch': '1.792'}
+                                                [A
+ 44%|████▍     | 48/108 [01:27<02:02,  2.04s/it][A
+ 45%|████▌     | 49/108 [01:29<02:03,  2.09s/it][A
+ 46%|████▋     | 50/108 [01:31<01:54,  1.98s/it][A
+{'loss': '0.2334', 'grad_norm': '0.3967', 'learning_rate': '0.0001157', 'entropy': '0.611', 'num_tokens': '3.358e+05', 'mean_token_accuracy': '0.9266', 'epoch': '1.868'}
+                                                [A
+ 46%|████▋     | 50/108 [01:31<01:54,  1.98s/it][A
+ 47%|████▋     | 51/108 [01:34<02:12,  2.32s/it][A
+ 48%|████▊     | 52/108 [01:35<01:48,  1.94s/it][A
+{'loss': '0.1958', 'grad_norm': '0.3838', 'learning_rate': '0.0001118', 'entropy': '0.726', 'num_tokens': '3.479e+05', 'mean_token_accuracy': '0.936', 'epoch': '1.943'}
+                                                [A
+ 48%|████▊     | 52/108 [01:35<01:48,  1.94s/it][A
+ 49%|████▉     | 53/108 [01:37<01:42,  1.87s/it][A
+ 50%|█████     | 54/108 [01:38<01:28,  1.64s/it][A
+{'loss': '0.2012', 'grad_norm': '0.5711', 'learning_rate': '0.0001078', 'entropy': '0.6765', 'num_tokens': '3.583e+05', 'mean_token_accuracy': '0.931', 'epoch': '2'}
+                                                [A
+ 50%|█████     | 54/108 [01:38<01:28,  1.64s/it][A
+ 51%|█████     | 55/108 [01:39<01:23,  1.58s/it][A
+ 52%|█████▏    | 56/108 [01:42<01:32,  1.77s/it][A
+                                                [A
+{'loss': '0.117', 'grad_norm': '0.2036', 'learning_rate': '0.0001039', 'entropy': '0.5035', 'num_tokens': '3.72e+05', 'mean_token_accuracy': '0.9636', 'epoch': '2.075'}
+ 52%|█████▏    | 56/108 [01:42<01:32,  1.77s/it][A
+ 53%|█████▎    | 57/108 [01:43<01:26,  1.70s/it][A
+ 54%|█████▎    | 58/108 [01:46<01:35,  1.91s/it][A
+{'loss': '0.1483', 'grad_norm': '0.2636', 'learning_rate': '0.0001', 'entropy': '0.7811', 'num_tokens': '3.854e+05', 'mean_token_accuracy': '0.9524', 'epoch': '2.151'}
+                                                [A
+ 54%|█████▎    | 58/108 [01:46<01:35,  1.91s/it][A
+ 55%|█████▍    | 59/108 [01:48<01:38,  2.00s/it][A
+ 56%|█████▌    | 60/108 [01:50<01:39,  2.07s/it][A
+{'loss': '0.1187', 'grad_norm': '0.2171', 'learning_rate': '9.608e-05', 'entropy': '0.5277', 'num_tokens': '4.017e+05', 'mean_token_accuracy': '0.9626', 'epoch': '2.226'}
+                                                [A
+ 56%|█████▌    | 60/108 [01:50<01:39,  2.07s/it][A
+ 56%|█████▋    | 61/108 [01:52<01:29,  1.90s/it][A
+ 57%|█████▋    | 62/108 [01:54<01:31,  2.00s/it][A
+                                                [A
+{'loss': '0.09361', 'grad_norm': '0.2731', 'learning_rate': '9.216e-05', 'entropy': '0.6206', 'num_tokens': '4.155e+05', 'mean_token_accuracy': '0.9724', 'epoch': '2.302'}
+ 57%|█████▋    | 62/108 [01:54<01:31,  2.00s/it][A
+ 59%|█████▉    | 64/108 [01:56<01:13,  1.68s/it][A
+                                                [A
+{'loss': '0.1679', 'grad_norm': '0.4194', 'learning_rate': '8.824e-05', 'entropy': '0.6904', 'num_tokens': '4.249e+05', 'mean_token_accuracy': '0.948', 'epoch': '2.377'}
+ 59%|█████▉    | 64/108 [01:56<01:13,  1.68s/it][A
+ 60%|██████    | 65/108 [01:58<01:06,  1.54s/it][A
+                                                [A
+{'loss': '0.1047', 'grad_norm': '0.4389', 'learning_rate': '8.431e-05', 'entropy': '0.7076', 'num_tokens': '4.33e+05', 'mean_token_accuracy': '0.9697', 'epoch': '2.453'}
+ 61%|██████    | 66/108 [01:58<01:04,  1.54s/it][A
+ 62%|██████▏   | 67/108 [02:01<01:02,  1.52s/it][A
+ 63%|██████▎   | 68/108 [02:02<01:02,  1.57s/it][A
+                                                [A
+{'loss': '0.1919', 'grad_norm': '0.414', 'learning_rate': '8.039e-05', 'entropy': '0.7288', 'num_tokens': '4.465e+05', 'mean_token_accuracy': '0.9427', 'epoch': '2.528'}
+ 63%|██████▎   | 68/108 [02:02<01:02,  1.57s/it][A
+ 64%|██████▍   | 69/108 [02:04<01:07,  1.73s/it][A
+ 65%|██████▍   | 70/108 [02:06<01:07,  1.79s/it][A
+{'loss': '0.1475', 'grad_norm': '0.4472', 'learning_rate': '7.647e-05', 'entropy': '0.4938', 'num_tokens': '4.62e+05', 'mean_token_accuracy': '0.9513', 'epoch': '2.604'}
+                                                [A
+ 65%|██████▍   | 70/108 [02:06<01:07,  1.79s/it][A
+ 66%|██████▌   | 71/108 [02:08<01:00,  1.64s/it][A
+ 67%|██████▋   | 72/108 [02:09<00:58,  1.62s/it][A
+{'loss': '0.1161', 'grad_norm': '0.501', 'learning_rate': '7.255e-05', 'entropy': '0.7741', 'num_tokens': '4.727e+05', 'mean_token_accuracy': '0.9575', 'epoch': '2.679'}
+                                                [A
+ 67%|██████▋   | 72/108 [02:09<00:58,  1.62s/it][A
+ 68%|██████▊   | 73/108 [02:11<00:59,  1.70s/it][A
+ 69%|██████▊   | 74/108 [02:13<01:02,  1.85s/it][A
+                                                [A
+{'loss': '0.1259', 'grad_norm': '0.5542', 'learning_rate': '6.863e-05', 'entropy': '0.5308', 'num_tokens': '4.879e+05', 'mean_token_accuracy': '0.9584', 'epoch': '2.755'}
+ 69%|██████▊   | 74/108 [02:13<01:02,  1.85s/it][A
+ 69%|██████▉   | 75/108 [02:15<00:59,  1.80s/it][A
+ 70%|███████   | 76/108 [02:17<01:03,  1.97s/it][A
+                                                [A
+{'loss': '0.1322', 'grad_norm': '0.3514', 'learning_rate': '6.471e-05', 'entropy': '0.4871', 'num_tokens': '5.023e+05', 'mean_token_accuracy': '0.9627', 'epoch': '2.83'}
+ 70%|███████   | 76/108 [02:17<01:03,  1.97s/it][A
+ 71%|███████▏  | 77/108 [02:20<01:03,  2.05s/it][A
+ 72%|███████▏  | 78/108 [02:22<01:03,  2.10s/it][A
+                                                [A
+{'loss': '0.09953', 'grad_norm': '0.2253', 'learning_rate': '6.078e-05', 'entropy': '0.4164', 'num_tokens': '5.187e+05', 'mean_token_accuracy': '0.9725', 'epoch': '2.906'}
+ 72%|███████▏  | 78/108 [02:22<01:03,  2.10s/it][A
+ 73%|███████▎  | 79/108 [02:24<01:02,  2.14s/it][A
+ 74%|███████▍  | 80/108 [02:26<01:00,  2.17s/it][A
+                                                [A
+{'loss': '0.175', 'grad_norm': '0.3638', 'learning_rate': '5.686e-05', 'entropy': '0.504', 'num_tokens': '5.351e+05', 'mean_token_accuracy': '0.9556', 'epoch': '2.981'}
+ 74%|███████▍  | 80/108 [02:26<01:00,  2.17s/it][A
+ 76%|███████▌  | 82/108 [02:29<00:44,  1.71s/it][A
+                                                [A
+{'loss': '0.07944', 'grad_norm': '0.4452', 'learning_rate': '5.294e-05', 'entropy': '0.6268', 'num_tokens': '5.438e+05', 'mean_token_accuracy': '0.969', 'epoch': '3.038'}
+ 76%|███████▌  | 82/108 [02:29<00:44,  1.71s/it][A
+ 77%|███████▋  | 83/108 [02:31<00:44,  1.80s/it][A
+{'loss': '0.09531', 'grad_norm': '0.3038', 'learning_rate': '4.902e-05', 'entropy': '0.5978', 'num_tokens': '5.573e+05', 'mean_token_accuracy': '0.9696', 'epoch': '3.113'}
+ 78%|███████▊  | 84/108 [02:32<00:41,  1.74s/it][A
+                                                [A
+ 78%|███████▊  | 84/108 [02:32<00:41,  1.74s/it][A
+ 79%|███████▊  | 85/108 [02:35<00:42,  1.87s/it][A
+ 80%|███████▉  | 86/108 [02:36<00:40,  1.83s/it][A
+                                                [A
+{'loss': '0.08848', 'grad_norm': '0.33', 'learning_rate': '4.51e-05', 'entropy': '0.5517', 'num_tokens': '5.718e+05', 'mean_token_accuracy': '0.976', 'epoch': '3.189'}
+ 80%|███████▉  | 86/108 [02:36<00:40,  1.83s/it][A
+ 81%|████████  | 87/108 [02:38<00:37,  1.78s/it][A
+ 81%|████████▏ | 88/108 [02:40<00:35,  1.76s/it][A
+                                                [A
+{'loss': '0.1225', 'grad_norm': '0.4269', 'learning_rate': '4.118e-05', 'entropy': '0.7242', 'num_tokens': '5.842e+05', 'mean_token_accuracy': '0.9699', 'epoch': '3.264'}
+ 81%|████████▏ | 88/108 [02:40<00:35,  1.76s/it][A
+ 83%|████████▎ | 90/108 [02:43<00:30,  1.69s/it][A
+                                                [A
+{'loss': '0.06525', 'grad_norm': '0.3899', 'learning_rate': '3.725e-05', 'entropy': '0.6467', 'num_tokens': '5.957e+05', 'mean_token_accuracy': '0.9788', 'epoch': '3.34'}
+ 83%|████████▎ | 90/108 [02:43<00:30,  1.69s/it][A
+ 84%|████████▍ | 91/108 [02:44<00:28,  1.67s/it][A
+{'loss': '0.04326', 'grad_norm': '0.3187', 'learning_rate': '3.333e-05', 'entropy': '0.6109', 'num_tokens': '6.053e+05', 'mean_token_accuracy': '0.9863', 'epoch': '3.415'}
+ 85%|████████▌ | 92/108 [02:46<00:24,  1.51s/it][A
+                                                [A
+ 85%|████████▌ | 92/108 [02:46<00:24,  1.51s/it][A
+ 86%|████████▌ | 93/108 [02:48<00:25,  1.70s/it][A
+{'loss': '0.07597', 'grad_norm': '0.4922', 'learning_rate': '2.941e-05', 'entropy': '0.4577', 'num_tokens': '6.201e+05', 'mean_token_accuracy': '0.9785', 'epoch': '3.491'}
+ 87%|████████▋ | 94/108 [02:50<00:24,  1.73s/it][A
+                                                [A
+ 87%|████████▋ | 94/108 [02:50<00:24,  1.73s/it][A
+ 88%|████████▊ | 95/108 [02:52<00:24,  1.87s/it][A
+ 89%|████████▉ | 96/108 [02:53<00:21,  1.79s/it][A
+                                                [A
+{'loss': '0.09879', 'grad_norm': '0.3225', 'learning_rate': '2.549e-05', 'entropy': '0.4549', 'num_tokens': '6.342e+05', 'mean_token_accuracy': '0.9738', 'epoch': '3.566'}
+ 89%|████████▉ | 96/108 [02:53<00:21,  1.79s/it][A
+ 90%|████████▉ | 97/108 [02:56<00:21,  1.95s/it][A
+ 91%|█████████ | 98/108 [02:57<00:18,  1.89s/it][A
+{'loss': '0.06249', 'grad_norm': '0.3792', 'learning_rate': '2.157e-05', 'entropy': '0.4184', 'num_tokens': '6.489e+05', 'mean_token_accuracy': '0.982', 'epoch': '3.642'}
+                                                [A
+ 91%|█████████ | 98/108 [02:57<00:18,  1.89s/it][A
+ 92%|█████████▏| 99/108 [02:59<00:16,  1.87s/it][A
+{'loss': '0.04988', 'grad_norm': '0.4864', 'learning_rate': '1.765e-05', 'entropy': '0.3789', 'num_tokens': '6.639e+05', 'mean_token_accuracy': '0.9848', 'epoch': '3.717'}
+ 93%|█████████▎| 100/108 [03:01<00:15,  1.98s/it][A
+                                                 [A
+ 93%|█████████▎| 100/108 [03:01<00:15,  1.98s/it][A
+ 94%|█████████▎| 101/108 [03:05<00:16,  2.33s/it][A
+ 94%|█████████▍| 102/108 [03:07<00:13,  2.30s/it][A
+                                                 [A
+{'loss': '0.05544', 'grad_norm': '0.381', 'learning_rate': '1.373e-05', 'entropy': '0.5498', 'num_tokens': '6.803e+05', 'mean_token_accuracy': '0.9835', 'epoch': '3.792'}
+ 94%|█████████▍| 102/108 [03:07<00:13,  2.30s/it][A
+ 95%|█████████▌| 103/108 [03:09<00:11,  2.21s/it][A
+{'loss': '0.05952', 'grad_norm': '0.3339', 'learning_rate': '9.804e-06', 'entropy': '0.3558', 'num_tokens': '6.958e+05', 'mean_token_accuracy': '0.981', 'epoch': '3.868'}
+ 96%|█████████▋| 104/108 [03:11<00:08,  2.22s/it][A
+                                                 [A
+ 96%|█████████▋| 104/108 [03:11<00:08,  2.22s/it][A
+ 97%|█████████▋| 105/108 [03:12<00:05,  1.91s/it][A
+ 98%|█████████▊| 106/108 [03:14<00:03,  1.97s/it][A
+                                                 [A
+{'loss': '0.05891', 'grad_norm': '0.3879', 'learning_rate': '5.882e-06', 'entropy': '0.4422', 'num_tokens': '7.075e+05', 'mean_token_accuracy': '0.9815', 'epoch': '3.943'}
+ 98%|█████████▊| 106/108 [03:14<00:03,  1.97s/it][A
+ 99%|█████████▉| 107/108 [03:16<00:01,  1.96s/it][A
+                                                 [A
+{'loss': '0.06949', 'grad_norm': '0.6577', 'learning_rate': '1.961e-06', 'entropy': '0.5461', 'num_tokens': '7.167e+05', 'mean_token_accuracy': '0.9781', 'epoch': '4'}
+100%|██████████| 108/108 [03:17<00:00,  1.96s/it][A
+                                                 [A
+{'train_runtime': '198.3', 'train_samples_per_second': '1.069', 'train_steps_per_second': '0.545', 'train_loss': '0.1959', 'epoch': '4'}
+100%|██████████| 108/108 [03:18<00:00,  1.96s/it][A100%|██████████| 108/108 [03:18<00:00,  1.84s/it]
+
+Saving final LoRA adapter to /tmp/qwen3b-sft
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  24%|██▍       | 57.6MB /  240MB            [A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  24%|██▍       | 57.6MB /  240MB            [A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  28%|██▊       | 66.6MB /  240MB            [A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  28%|██▊       | 66.6MB /  240MB            [A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  28%|██▊       | 66.6MB /  240MB            [A[A[AProcessing Files (1 / 2)      :  31%|███       | 78.0MB /  251MB, 83.3MB/s  
+New Data Upload               :  50%|████▉     | 66.6MB /  134MB, 83.3MB/s  [A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  28%|██▊       | 66.6MB /  240MB            [A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  30%|██▉       | 71.5MB /  240MB            [A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  56%|█████▌    |  134MB /  240MB            [A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  84%|████████▎ |  201MB /  240MB            [A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  84%|████████▎ |  201MB /  240MB            [A[A[AProcessing Files (1 / 2)      :  84%|████████▍ |  212MB /  251MB,  111MB/s  
+New Data Upload               :  84%|████████▎ |  201MB /  240MB,  111MB/s  [A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors:  84%|████████▎ |  201MB /  240MB            [A[A[A
+
+
+
+  ...n3b-sft/training_args.bin:  99%|█████████▉| 5.34kB / 5.37kB            [A[A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|█████████▉|  239MB /  240MB            [A[A[A
+
+
+
+  ...n3b-sft/training_args.bin:  99%|█████████▉| 5.34kB / 5.37kB            [A[A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|█████████▉|  239MB /  240MB            [A[A[A
+
+
+
+  ...n3b-sft/training_args.bin:  99%|█████████▉| 5.34kB / 5.37kB            [A[A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|█████████▉|  239MB /  240MB            [A[A[A
+
+
+
+  ...n3b-sft/training_args.bin:  99%|█████████▉| 5.34kB / 5.37kB            [A[A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  240MB /  240MB            [A[A[A
+
+
+
+  ...n3b-sft/training_args.bin: 100%|██████████| 5.37kB / 5.37kB            [A[A[A[AProcessing Files (3 / 3)      : 100%|██████████|  251MB /  251MB, 85.6MB/s  
+New Data Upload               : 100%|██████████|  240MB /  240MB, 85.6MB/s  [A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  240MB /  240MB            [A[A[A
+
+
+
+  ...n3b-sft/training_args.bin: 100%|██████████| 5.37kB / 5.37kB            [A[A[A[A
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  240MB /  240MB            [A[A[A
+
+
+
+  ...n3b-sft/training_args.bin: 100%|██████████| 5.37kB / 5.37kB            [A[A[A[AProcessing Files (3 / 3)      : 100%|██████████|  251MB /  251MB, 79.9MB/s  
+New Data Upload               : 100%|██████████|  240MB /  240MB, 79.9MB/s  
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            
+  ...adapter_model.safetensors: 100%|██████████|  240MB /  240MB            
+  ...n3b-sft/training_args.bin: 100%|██████████| 5.37kB / 5.37kB            
+Pushing to HF Hub: bpHigh/qwen3b-office-sft-kimi
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ...n3b-sft/training_args.bin: 100%|██████████| 5.37kB / 5.37kB            [A[A
+
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A[A
+
+
+
+  ...adapter_model.safetensors: 100%|██████████|  240MB /  240MB            [A[A[A[A
+
+  ...n3b-sft/training_args.bin: 100%|██████████| 5.37kB / 5.37kB            [A[A
+
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A[A
+
+
+
+  ...adapter_model.safetensors: 100%|██████████|  240MB /  240MB            [A[A[A[A
+
+  ...n3b-sft/training_args.bin: 100%|██████████| 5.37kB / 5.37kB            [A[A
+
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A[A
+
+
+
+  ...adapter_model.safetensors: 100%|██████████|  240MB /  240MB            [A[A[A[A
+
+  ...n3b-sft/training_args.bin: 100%|██████████| 5.37kB / 5.37kB            [A[A
+
+
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            [A[A[A
+
+
+
+  ...adapter_model.safetensors: 100%|██████████|  240MB /  240MB            [A[A[A[AProcessing Files (3 / 3)      : 100%|██████████|  251MB /  251MB,  0.00B/s  
+New Data Upload               : |          |  0.00B /  0.00B,  0.00B/s  
+  ...n3b-sft/training_args.bin: 100%|██████████| 5.37kB / 5.37kB            
+  ...qwen3b-sft/tokenizer.json: 100%|██████████| 11.4MB / 11.4MB            
+  ...adapter_model.safetensors: 100%|██████████|  240MB /  240MB            
+
+Done.
