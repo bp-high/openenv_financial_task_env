@@ -1,0 +1,245 @@
+{
+  "model": "bpHigh/qwen3b-office-sft-kimi",
+  "split": "eval",
+  "family": "all",
+  "n_tasks": 22,
+  "avg_score": 0.0061,
+  "success_rate": 0.0,
+  "total_elapsed_s": 5901.1,
+  "by_family": {
+    "docx": {
+      "n": 4,
+      "avg": 0.005
+    },
+    "pptx": {
+      "n": 8,
+      "avg": 0.005
+    },
+    "xlsx": {
+      "n": 10,
+      "avg": 0.0075
+    }
+  },
+  "results": [
+    {
+      "task_id": "osworld_0a0faba3",
+      "family": "docx",
+      "primary_tag": "check_tabstops",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 315.9
+    },
+    {
+      "task_id": "osworld_0b17a146",
+      "family": "docx",
+      "primary_tag": "compare_docx_files",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 202.0
+    },
+    {
+      "task_id": "osworld_66399b0d",
+      "family": "docx",
+      "primary_tag": "compare_docx_tables",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 167.1
+    },
+    {
+      "task_id": "osworld_0810415c",
+      "family": "docx",
+      "primary_tag": "compare_line_spacing",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 212.0
+    },
+    {
+      "task_id": "pptarena_case_60_fix_text_placement",
+      "family": "pptx",
+      "primary_tag": "Alignment, Distribution & Z-order",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 264.9
+    },
+    {
+      "task_id": "pptarena_case_7_update_quarter_two_data_b",
+      "family": "pptx",
+      "primary_tag": "Charts",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 296.3
+    },
+    {
+      "task_id": "pptarena_case_32_arrange_image_and_text",
+      "family": "pptx",
+      "primary_tag": "Images & Pictures",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 343.5
+    },
+    {
+      "task_id": "pptarena_case_36_add_speaker_notes",
+      "family": "pptx",
+      "primary_tag": "Slide/Section Management & Footers",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 221.6
+    },
+    {
+      "task_id": "pptarena_case_49_normalize_thousand_separators",
+      "family": "pptx",
+      "primary_tag": "Tables",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 228.5
+    },
+    {
+      "task_id": "pptarena_case_35_structural_fix",
+      "family": "pptx",
+      "primary_tag": "Text & Typography",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 327.4
+    },
+    {
+      "task_id": "pptarena_case_40_hindu_center_titles",
+      "family": "pptx",
+      "primary_tag": "Text & Typography",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 388.8
+    },
+    {
+      "task_id": "pptarena_case_26_match_slide_colors_to_theme",
+      "family": "pptx",
+      "primary_tag": "Theme & Background",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 531.2
+    },
+    {
+      "task_id": "finch_10",
+      "family": "xlsx",
+      "primary_tag": "Calculation",
+      "split": "eval",
+      "score": 0.03,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 234.0
+    },
+    {
+      "task_id": "finch_35",
+      "family": "xlsx",
+      "primary_tag": "Calculation",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 271.9
+    },
+    {
+      "task_id": "finch_38",
+      "family": "xlsx",
+      "primary_tag": "Calculation",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 203.0
+    },
+    {
+      "task_id": "finch_112",
+      "family": "xlsx",
+      "primary_tag": "Cross-sheet/file Retrieval",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 268.3
+    },
+    {
+      "task_id": "finch_154",
+      "family": "xlsx",
+      "primary_tag": "Data Entry / Import",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 159.2
+    },
+    {
+      "task_id": "finch_14",
+      "family": "xlsx",
+      "primary_tag": "Financial Modeling",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 199.8
+    },
+    {
+      "task_id": "finch_168",
+      "family": "xlsx",
+      "primary_tag": "Structuring / Formatting",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 224.1
+    },
+    {
+      "task_id": "finch_59",
+      "family": "xlsx",
+      "primary_tag": "Structuring / Formatting",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 227.5
+    },
+    {
+      "task_id": "finch_122",
+      "family": "xlsx",
+      "primary_tag": "Summary / Visualization",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 327.6
+    },
+    {
+      "task_id": "finch_158",
+      "family": "xlsx",
+      "primary_tag": "Validation / Review",
+      "split": "eval",
+      "score": 0.005,
+      "success": false,
+      "steps": 15,
+      "elapsed_s": 286.5
+    }
+  ]
+}

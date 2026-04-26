@@ -67,8 +67,18 @@ logged on HF Jobs L40S, ~$0.50–0.80 each. The 8K run is online at
 | **MiniMaxAI/MiniMax-M2.1** (frontier baseline) | 0.390 | 41% | 0.293 | 0.445 | 0.485 |
 | **moonshotai/Kimi-K2.5** (teacher) | 0.481 | 52% | 0.370 | 0.472 | 0.673 |
 | **Qwen/Qwen2.5-Coder-3B-Instruct** (student baseline) | **0.001** | 0% | 0.001 | 0.001 | 0.001 |
-| **Qwen3-Coder-3B + LoRA SFT (4K)** *(eval pending)* | *coming* | *coming* | – | – | – |
-| **Qwen3-Coder-3B + LoRA SFT (8K)** *(eval pending)* | *coming* | *coming* | – | – | – |
+| **Qwen2.5-Coder-3B + LoRA SFT (4K)** | 0.006 | 0% | 0.007 | 0.005 | 0.005 |
+| **Qwen2.5-Coder-3B + LoRA SFT (8K)** | 0.011 | 0% | 0.018 | 0.005 | 0.005 |
+
+> **Reading the SFT rows.** Both adapters lift the vanilla baseline ~6–11×
+> on the eval set, but every episode still bottoms out at the env's reward
+> floor (0.005) — the model produces *parseable* code but it doesn't mutate
+> the source file in ways the grader rewards. The SFT loss is well-
+> converged (0.19 on the training distribution), so the gap is a
+> generalization-from-Kimi-trajectories problem, not an under-training one.
+> The *next* step — GRPO continuation directly against the env's reward
+> signal — is what's expected to close this. See [`train_grpo.py`](train_grpo.py)
+> and the rollout-format note in [`edits.md`](edits.md) Phase 13.
 
 Reproduce any row:
 
@@ -121,6 +131,17 @@ Re-parse any HF Job's stdout into clean metrics + a loss curve PNG with
 [`data_pipeline/analyze_sft_logs.py`](data_pipeline/analyze_sft_logs.py)
 — takes a `--job-id` and emits `training_metrics.jsonl`, `summary.json`,
 and `sft_loss_curve.png`. Both runs above were generated this way.
+
+**Eval artifacts — both SFT adapters scored against the 22-task held-out split:**
+
+| Run | Eval results.json | Raw stdout log | HF Job page |
+|---|---|---|---|
+| 4K context | [results.json](runs/sft_eval_v2/bpHigh_qwen3b-office-sft-kimi/results.json) | [raw_logs.txt](runs/sft_eval_v2/raw_logs.txt) | [Job 69ed97e5…2ad](https://huggingface.co/jobs/bpHigh/69ed97e5d2c8bd8662bcf2ad) |
+| 8K context | [results.json](runs/sft_eval_v2/bpHigh_qwen3b-office-sft-kimi-long/results.json) | [raw_logs.txt](runs/sft_eval_v2/raw_logs.txt) | [Job 69ed97e5…2ad](https://huggingface.co/jobs/bpHigh/69ed97e5d2c8bd8662bcf2ad) |
+
+Both adapters were evaluated in a single HF Jobs run (L40S, ~30 min, ~$1)
+via [`eval_lora.py --adapters A,B`](eval_lora.py) — the base model loads
+once and each adapter is detached/reattached without reloading.
 
 ---
 

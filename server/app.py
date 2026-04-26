@@ -696,6 +696,22 @@ def build_dashboard() -> gr.Blocks:
             "[`data_pipeline/analyze_sft_logs.py`](https://github.com/bp-high/openenv_financial_task_env/blob/main/data_pipeline/analyze_sft_logs.py) "
             "(works on any HF Job ID, not just these two)."
         )
+        gr.Markdown(
+            "**Eval artifacts** — both adapters scored on the 22-task held-out split:\n\n"
+            "| Run | Eval results.json | Raw stdout log | HF Job page |\n"
+            "|---|---|---|---|\n"
+            "| 4K context | "
+            "[results.json](https://raw.githubusercontent.com/bp-high/openenv_financial_task_env/main/runs/sft_eval_v2/bpHigh_qwen3b-office-sft-kimi/results.json) | "
+            "[raw_logs.txt](https://raw.githubusercontent.com/bp-high/openenv_financial_task_env/main/runs/sft_eval_v2/raw_logs.txt) | "
+            "[Job 69ed97e5...2ad](https://huggingface.co/jobs/bpHigh/69ed97e5d2c8bd8662bcf2ad) |\n"
+            "| 8K context | "
+            "[results.json](https://raw.githubusercontent.com/bp-high/openenv_financial_task_env/main/runs/sft_eval_v2/bpHigh_qwen3b-office-sft-kimi-long/results.json) | "
+            "[raw_logs.txt](https://raw.githubusercontent.com/bp-high/openenv_financial_task_env/main/runs/sft_eval_v2/raw_logs.txt) | "
+            "[Job 69ed97e5...2ad](https://huggingface.co/jobs/bpHigh/69ed97e5d2c8bd8662bcf2ad) |\n\n"
+            "Both adapters were evaluated in a single HF Jobs run (L40S, ~30 min, ~$1) "
+            "via [`eval_lora.py`](https://github.com/bp-high/openenv_financial_task_env/blob/main/eval_lora.py) "
+            "with `--adapters A,B` so the base model loads once."
+        )
 
         # ---- Plot ----
         gr.Markdown("## 4K vs 8K context length ablation")

@@ -1,0 +1,38 @@
+{
+  "bpHigh_qwen3b-office-sft-kimi": {
+    "avg_score": 0.0061,
+    "success_rate": 0.0,
+    "by_family": {
+      "docx": {
+        "n": 4,
+        "avg": 0.005
+      },
+      "pptx": {
+        "n": 8,
+        "avg": 0.005
+      },
+      "xlsx": {
+        "n": 10,
+        "avg": 0.0075
+      }
+    }
+  },
+  "bpHigh_qwen3b-office-sft-kimi-long": {
+    "avg_score": 0.0107,
+    "success_rate": 0.0,
+    "by_family": {
+      "docx": {
+        "n": 4,
+        "avg": 0.005
+      },
+      "pptx": {
+        "n": 8,
+        "avg": 0.005
+      },
+      "xlsx": {
+        "n": 10,
+        "avg": 0.0175
+      }
+    }
+  }
+}
