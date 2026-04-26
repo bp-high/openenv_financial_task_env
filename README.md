@@ -128,14 +128,16 @@ and `sft_loss_curve.png`. Both runs above were generated this way.
 
 | Family | Source | Train | Eval | Total | What it tests |
 |---|---|---|---|---|---|
-| `xlsx` | Hand-curated (Round 1) | 10 | 0 | 10 | Diverse Finch tasks (QA + MODIFY) |
-| `xlsx` | [Finch](https://huggingface.co/datasets/FinWorkBench/Finch) | 40 | 10 | 50 | Stratified across 7 task-type tags |
+| `xlsx` | [Finch](https://huggingface.co/datasets/FinWorkBench/Finch) — hand-curated (Round 1) | 10 | 0 | 10 | Diverse Finch tasks hand-picked for the original submission (QA + MODIFY mix) |
+| `xlsx` | [Finch](https://huggingface.co/datasets/FinWorkBench/Finch) — stratified pull (Round 2) | 40 | 10 | 50 | Stratified across 7 task-type tags |
 | `docx` | [OSWorld-Verified](https://github.com/xlang-ai/OSWorld) (libreoffice_writer) | 17 | 4 | 21 | 16 distinct evaluator functions ported from `desktop_env/evaluators/metrics/docs.py` |
 | `pptx` | [PPTArena](https://github.com/michaelofengend/PPTArena) | 30 | 8 | 38 | 16 distinct edit_types, including singletons (transitions, animations, A/V) |
 | **Total** | | **97** | **22** | **119** | |
 
-The 22-task eval set is stratified — at least 1 task per tag bucket — so the
-benchmark isn't biased toward one task type.
+All 60 xlsx tasks come from **Finch (FinWorkBench)** — the 10 hand-curated
+Round-1 picks plus the 50 stratified Round-2 pull. The 22-task eval set is
+stratified (at least 1 task per tag bucket per family) so the benchmark
+isn't biased toward one task type.
 
 ---
 

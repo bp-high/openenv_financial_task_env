@@ -6,16 +6,15 @@ app: server.app:app
 port: 8000
 
 # Cross-format RL environment for office-document tasks.
-# Sources: FinWorkBench/Finch (xlsx) + OSWorld-Verified (docx) + PPTArena (pptx).
 #
-# 10 hand-curated xlsx + 50 Finch xlsx + 21 OSWorld docx + 38 PPTArena pptx
+# 60 xlsx (Finch — 10 hand-curated Round-1 + 50 stratified Round-2 pull) ·
+# 21 docx (OSWorld-Verified libreoffice_writer subset) ·
+# 38 pptx (PPTArena evaluation_pairs_refined.json subset)
 # = 119 total tasks · 97 train + 22 eval.
 #
-# Round-1 baseline hand-curated tasks (task_1..task_10) are listed below
-# explicitly.  The 22-task eval split (10 xlsx + 4 docx + 8 pptx) is also
-# enumerated for benchmark reproducibility.  The remaining 87 training-only
-# tasks are loaded at runtime from data/manifest.jsonl — listing them all
-# here would balloon this file.
+# All 119 tasks are enumerated below.  Round-1 hand-curated tasks have IDs
+# task_1..task_10; Round-2 stratified pull uses finch_*; OSWorld uses
+# osworld_<uuid8>; PPTArena uses pptarena_<slug>.
 
 metadata:
   total_tasks: 119
@@ -30,20 +29,23 @@ metadata:
     - name: Finch (FinWorkBench)
       url: https://huggingface.co/datasets/FinWorkBench/Finch
       family: xlsx
-      tasks: 50
+      tasks: 60
+      breakdown: "10 hand-curated (Round 1) + 50 stratified pull (Round 2)"
     - name: OSWorld-Verified (libreoffice_writer)
       url: https://github.com/xlang-ai/OSWorld
       family: docx
       tasks: 21
+      breakdown: "21 strict-docx (skipping 1 .odt + 1 .pdf input)"
     - name: PPTArena
       url: https://github.com/michaelofengend/PPTArena
       family: pptx
       tasks: 38
+      breakdown: "38 stratified across 16 edit_types incl. all 5 long-tail singletons"
   manifest_path: data/manifest.jsonl
 
 tasks:
 
-  # ── Hand-curated Round-1 tasks (xlsx) ─────────────────────────
+  # ── Hand-curated Finch tasks (Round 1) ────────────────────────
 
   - id: task_1
     name: 'Count Plants in Spreadsheet'
@@ -52,6 +54,8 @@ tasks:
     difficulty: easy
     task_type: QA
     max_steps: 15
+    split: train
+    origin: finch_hand_curated
     grader:
       type: programmatic
       description: "QA (xlsx) — extract numbers from agent's text answer, compare against reference value. 80% numeric match (5% tolerance) + 20% keyword overlap. Score 0.001-0.999."
@@ -63,6 +67,8 @@ tasks:
     difficulty: easy
     task_type: QA
     max_steps: 15
+    split: train
+    origin: finch_hand_curated
     grader:
       type: programmatic
       description: "QA (xlsx) — extract numbers from agent's text answer, compare against reference value. 80% numeric match (5% tolerance) + 20% keyword overlap. Score 0.001-0.999."
@@ -74,6 +80,8 @@ tasks:
     difficulty: medium
     task_type: QA
     max_steps: 15
+    split: train
+    origin: finch_hand_curated
     grader:
       type: programmatic
       description: "QA (xlsx) — extract numbers from agent's text answer, compare against reference value. 80% numeric match (5% tolerance) + 20% keyword overlap. Score 0.001-0.999."
@@ -85,6 +93,8 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: train
+    origin: finch_hand_curated
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
@@ -96,6 +106,8 @@ tasks:
     difficulty: hard
     task_type: MODIFY
     max_steps: 15
+    split: train
+    origin: finch_hand_curated
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
@@ -107,6 +119,8 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: train
+    origin: finch_hand_curated
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
@@ -118,6 +132,8 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: train
+    origin: finch_hand_curated
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
@@ -129,6 +145,8 @@ tasks:
     difficulty: hard
     task_type: MODIFY
     max_steps: 15
+    split: train
+    origin: finch_hand_curated
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
@@ -140,6 +158,8 @@ tasks:
     difficulty: hard
     task_type: MODIFY
     max_steps: 15
+    split: train
+    origin: finch_hand_curated
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
@@ -151,11 +171,1150 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: train
+    origin: finch_hand_curated
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
 
-  # ── Eval split — xlsx (10 tasks from Finch) ──────────────────
+  # ── Train split — Finch xlsx (40 tasks, stratified Round-2 pull) ─
+
+  - id: finch_6
+    name: 'Calculation: Please write a structured economic analysis report based on '
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_15
+    name: 'Structuring / Formatting: Translate all Chinese text in this Excel workbook (including'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_22
+    name: 'Validation / Review: Please review the pivot table on the Replacement Cost sheet '
+    family: xlsx
+    primary_tag: 'Validation / Review'
+    difficulty: hard
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_32
+    name: 'Data Entry / Import: Please prepare a summary of all groups and staffing as of Ma'
+    family: xlsx
+    primary_tag: 'Data Entry / Import'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_33
+    name: 'Structuring / Formatting: Gather Enron North America’s Mid Year 2001 performance acros'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_47
+    name: 'Calculation: Complete the Income Statement (Purchase method) by calculati'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_55
+    name: 'Summary / Visualization: On the correl_graph sheet, create a time-series line chart c'
+    family: xlsx
+    primary_tag: 'Summary / Visualization'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_62
+    name: "Calculation: For EDF MAN, clear the 'Line of Credit Covering Initial Marg"
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_63
+    name: 'Cross-sheet/file Retrieval: Using RepIS-Qtrly as the base, please create the RepIS-Annua'
+    family: xlsx
+    primary_tag: 'Cross-sheet/file Retrieval'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_65
+    name: 'Validation / Review: Review the Inv & WC Value Adj summary tab and add the missin'
+    family: xlsx
+    primary_tag: 'Validation / Review'
+    difficulty: hard
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_66
+    name: 'Calculation: Calculate the Interest Payment fpr enron and fill the corren'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_68
+    name: 'Cross-sheet/file Retrieval: Complete the Summary worksheet by entering the missing data '
+    family: xlsx
+    primary_tag: 'Cross-sheet/file Retrieval'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_76
+    name: 'Structuring / Formatting: Reformat the table by bolding the titles and inserting row b'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_77
+    name: 'Calculation: Calculate the headcount for each of the three groups in the '
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_78
+    name: 'Cross-sheet/file Retrieval: Review the summary tab against each of the individual sheets'
+    family: xlsx
+    primary_tag: 'Cross-sheet/file Retrieval'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_82
+    name: "Structuring / Formatting: On the 'simplecorr' sheet, create a table whose column heade"
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_86
+    name: 'Data Entry / Import: Complete the asset allocation schedule using the provided as'
+    family: xlsx
+    primary_tag: 'Data Entry / Import'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_90
+    name: 'Structuring / Formatting: Add a top border to all values in the Summary tab that are c'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_93
+    name: 'Calculation: Complete both the Flat and Peak tables by using the provided'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_98
+    name: 'Data Entry / Import: Use publicly available market/financial data to populate She'
+    family: xlsx
+    primary_tag: 'Data Entry / Import'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_99
+    name: 'Structuring / Formatting: Based on the Canada – Non-Commercial roster, prepare a headc'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_105
+    name: 'Data Entry / Import: Add the 2/11/2000 column on the Feb 00 tab by mirroring the '
+    family: xlsx
+    primary_tag: 'Data Entry / Import'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_109
+    name: 'Calculation: Calculate the total FTE percentage by region and by business'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_124
+    name: 'Cross-sheet/file Retrieval: Complete the content in the summary sheet based on other spr'
+    family: xlsx
+    primary_tag: 'Cross-sheet/file Retrieval'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_125
+    name: 'Calculation: You are given an Excel table (Figure 1.19) showing, for IDA-'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_128
+    name: 'Summary / Visualization: Prepare a stacked area chart titled "Existing and Proposed D'
+    family: xlsx
+    primary_tag: 'Summary / Visualization'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_129
+    name: 'Summary / Visualization: Create a stacked area chart titled “Rolling 55 Day Payables '
+    family: xlsx
+    primary_tag: 'Summary / Visualization'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_133
+    name: 'Validation / Review: Audit the consolidated 2002 plan workbook and correct the fo'
+    family: xlsx
+    primary_tag: 'Validation / Review'
+    difficulty: hard
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_138
+    name: 'Structuring / Formatting: Add a new worksheet titled “P&C” and build a Property & Casu'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_139
+    name: 'Financial Modeling: Using the Cleburne Plant Damage Sensitivities, evaluate the '
+    family: xlsx
+    primary_tag: 'Financial Modeling'
+    difficulty: hard
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_142
+    name: 'Calculation: Under the assumptions of Scenario 1, calculate and populate—'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_143
+    name: 'Calculation: Apply Scenario 2 to calculate the current positions, the 30-'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_144
+    name: 'Calculation: Using the daily Crude Oil and Natural Gas prices recorded in'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_147
+    name: 'Data Entry / Import: Fill in the cells highlighted with a blue background, and th'
+    family: xlsx
+    primary_tag: 'Data Entry / Import'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_153
+    name: 'Structuring / Formatting: On the correlation sheet, add derived columns from the BSCTM'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_155
+    name: 'Validation / Review: Revise the data of 2002 allocation in HR sheet to reflect th'
+    family: xlsx
+    primary_tag: 'Validation / Review'
+    difficulty: hard
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_159
+    name: 'Structuring / Formatting: Complete the orange-highlighted cells on the Timing Tracking'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_166
+    name: 'Calculation: Finalize the Position Sensitivities for Gas (in US$) by calc'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_167
+    name: 'Financial Modeling: Based on the assumptions in the table, build out a complete '
+    family: xlsx
+    primary_tag: 'Financial Modeling'
+    difficulty: hard
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_170
+    name: 'Calculation: According to the specifications in the Strips sheet, aggrega'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  # ── Train split — OSWorld docx (17 tasks) ────────────────────
+
+  - id: osworld_0e47de2a
+    name: 'has_page_numbers_in_footers: Add page number for every page at the bottom left'
+    family: docx
+    primary_tag: 'has_page_numbers_in_footers'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_0e763496
+    name: 'compare_font_names: Change the font to "Times New Roman" throughout the text.'
+    family: docx
+    primary_tag: 'compare_font_names'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_3ef2b351
+    name: 'is_first_line_centered: Help me center align the heading in LibreOffice.'
+    family: docx
+    primary_tag: 'is_first_line_centered'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_6ada715d
+    name: 'compare_docx_images: Copy the screenshot 1.png from the desktop to where my curso'
+    family: docx
+    primary_tag: 'compare_docx_images'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_6f81754e
+    name: 'compare_unique_train_records: A certain railway company in Hong Kong uses a signaling syst'
+    family: docx
+    primary_tag: 'compare_unique_train_records'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_72b810ef
+    name: "evaluate_strike_through_last_paragraph: I am peer-reviewing my friend's course outline. I think the "
+    family: docx
+    primary_tag: 'evaluate_strike_through_last_paragraph'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_8472fece
+    name: 'evaluate_colored_words_in_tables: I am writing a word list for a dyslexic kid. To ease things '
+    family: docx
+    primary_tag: 'evaluate_colored_words_in_tables'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_88fe4b2d
+    name: 'compare_docx_files: I am making a guideline for students of my course and would '
+    family: docx
+    primary_tag: 'compare_docx_files'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_936321ce
+    name: 'compare_docx_tables: Could you help me convert the text seperated by commas to a '
+    family: docx
+    primary_tag: 'compare_docx_tables'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_adf5e2c3
+    name: 'compare_docx_files: Help me adding "Steinberg, F. M., Bearden, M. M., & Keen, C.'
+    family: docx
+    primary_tag: 'compare_docx_files'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_b21acd93
+    name: 'compare_line_spacing: I have been practicing professional writing lately. Now I am'
+    family: docx
+    primary_tag: 'compare_line_spacing'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_bb8ccc78
+    name: 'infeasible: Share this document with my team and let us edit it together'
+    family: docx
+    primary_tag: 'infeasible'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_d53ff5ee
+    name: 'compare_docx_files: I am currently engaged in text processing and require assist'
+    family: docx
+    primary_tag: 'compare_docx_files'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_e246f6d8
+    name: 'check_italic_font_size_14: I found Italic font very hard to discern from the normal tex'
+    family: docx
+    primary_tag: 'check_italic_font_size_14'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_e528b65e
+    name: 'compare_docx_files: Please help me make the first letter of each word to upperca'
+    family: docx
+    primary_tag: 'compare_docx_files'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_ecc2413d
+    name: 'contains_page_break: Hey, can you throw in a blank page right after this one?'
+    family: docx
+    primary_tag: 'contains_page_break'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  - id: osworld_f178a4a9
+    name: 'find_default_font: Make Times New Roman the default Font'
+    family: docx
+    primary_tag: 'find_default_font'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: osworld
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
+
+  # ── Train split — PPTArena pptx (30 tasks) ───────────────────
+
+  - id: pptarena_case_100_animation_canonicalization_bullet_sequencing
+    name: 'Object Animations: Case 100: Animation Canonicalization & Bullet Sequencin'
+    family: pptx
+    primary_tag: 'Object Animations'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_13_italicize_subheadings_d
+    name: 'Text & Typography: Case 13: Italicize Subheadings (D)'
+    family: pptx
+    primary_tag: 'Text & Typography'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_16_curate_multi_panel_photo_layout
+    name: 'Alignment, Distribution & Z-order: Case 16: Curate Multi-Panel Photo Layout'
+    family: pptx
+    primary_tag: 'Alignment, Distribution & Z-order'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_17_build_ensemble_category_boards
+    name: 'Shapes & Drawing: Case 17: Build Ensemble Category Boards'
+    family: pptx
+    primary_tag: 'Shapes & Drawing'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_23_add_thank_you_slide
+    name: 'Slide Layout & Placeholders: Case 23: Add Thank You Slide'
+    family: pptx
+    primary_tag: 'Slide Layout & Placeholders'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_27_correct_images
+    name: 'Images & Pictures: Case 27: Correct Images'
+    family: pptx
+    primary_tag: 'Images & Pictures'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_29_convert_bar_chart_to_pie_chart
+    name: 'Charts: Case 29: Convert Bar Chart to Pie Chart'
+    family: pptx
+    primary_tag: 'Charts'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_31_fix_text_overflow
+    name: 'Text & Typography: Case 31: Fix Text Overflow'
+    family: pptx
+    primary_tag: 'Text & Typography'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_37_add_transitions
+    name: 'Slide Transitions: Case 37: Add Transitions'
+    family: pptx
+    primary_tag: 'Slide Transitions'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_38_flip_theme_scheme
+    name: 'Theme & Background: Case 38: Flip Theme Scheme'
+    family: pptx
+    primary_tag: 'Theme & Background'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_43_transitionary_slides
+    name: 'Slide/Section Management & Footers: Case 43: Transitionary Slides'
+    family: pptx
+    primary_tag: 'Slide/Section Management & Footers'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_51_currency_symbol_swap_eurusd
+    name: 'Tables: Case 51: Currency Symbol Swap (EUR→USD)'
+    family: pptx
+    primary_tag: 'Tables'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_58_bullets_normalize_levels
+    name: 'Text & Typography: Case 58: Bullets Normalize Levels'
+    family: pptx
+    primary_tag: 'Text & Typography'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_59_convert_hyper_link
+    name: 'Hyperlinks & Action Settings: Case 59: Convert Hyper Link'
+    family: pptx
+    primary_tag: 'Hyperlinks & Action Settings'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_61_sort_by_score_and_crop_image_169
+    name: 'Tables: Case 61: Sort By Score And Crop Image 169'
+    family: pptx
+    primary_tag: 'Tables'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_63_spatial_constraint_layout
+    name: 'Alignment, Distribution & Z-order: Case 63: Spatial Constraint Layout'
+    family: pptx
+    primary_tag: 'Alignment, Distribution & Z-order'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_67_wcag_accessibility_master_cleanup
+    name: 'Accessibility & Semantics: Case 67: WCAG Accessibility & Master Cleanup'
+    family: pptx
+    primary_tag: 'Accessibility & Semantics'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_68_swimlane_flow_process_canonicalization
+    name: 'SmartArt & Diagrams: Case 68: Swimlane Flow Process Canonicalization'
+    family: pptx
+    primary_tag: 'SmartArt & Diagrams'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_73_dynamic_data_label_placement
+    name: 'Charts: Case 73: Dynamic Data Label Placement'
+    family: pptx
+    primary_tag: 'Charts'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_76_aesthetic_slide_makeover
+    name: 'Theme & Background: Case 76: Aesthetic Slide Makeover'
+    family: pptx
+    primary_tag: 'Theme & Background'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_81_add_company_logo
+    name: 'Images & Pictures: Case 81: Add Company Logo'
+    family: pptx
+    primary_tag: 'Images & Pictures'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_84_add_progress_bar
+    name: 'Shapes & Drawing: Case 84: Add Progress Bar'
+    family: pptx
+    primary_tag: 'Shapes & Drawing'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_85_arabic_translate_ltr
+    name: 'Text & Typography: Case 85: Arabic Translate LTR'
+    family: pptx
+    primary_tag: 'Text & Typography'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_87_merge_near_duplicate_slides
+    name: 'Slide/Section Management & Footers: Case 87: Merge Near-Duplicate Slides'
+    family: pptx
+    primary_tag: 'Slide/Section Management & Footers'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_90_screenshot_to_editable_text_ub_title_slide
+    name: 'Slide Layout & Placeholders: Case 90: Screenshot-to-Editable Text (UB Title Slide)'
+    family: pptx
+    primary_tag: 'Slide Layout & Placeholders'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_91_add_qr_code
+    name: 'Images & Pictures: Case 91: Add QR Code'
+    family: pptx
+    primary_tag: 'Images & Pictures'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_93_multi_edit_cascade_copernicus_climate_highlights
+    name: 'Charts: Case 93: Multi-Edit Cascade (Copernicus Climate Highlig'
+    family: pptx
+    primary_tag: 'Charts'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_95_master_layout_rebind
+    name: 'Template & Master-Level Edits: Case 95: Master & Layout Rebind'
+    family: pptx
+    primary_tag: 'Template & Master-Level Edits'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_98_cross_slide_conditional_formatting_status_timeline
+    name: 'SmartArt & Diagrams: Case 98: Cross-Slide Conditional Formatting (Status → T'
+    family: pptx
+    primary_tag: 'SmartArt & Diagrams'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_99_embed_configure_video_playback
+    name: 'Audio & Video: Case 99: Embed & Configure Video Playback'
+    family: pptx
+    primary_tag: 'Audio & Video'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: train
+    origin: pptarena
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
+
+  # ── Eval split — Finch xlsx (10 tasks) ───────────────────────
 
   - id: finch_10
     name: 'Calculation: Per the headers and established formula logic, populate form'
@@ -164,28 +1323,8 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
-    grader:
-      type: programmatic
-      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
-
-  - id: finch_112
-    name: 'Cross-sheet/file Retrieval: For each record, use the Frequency to place the Rent amount '
-    family: xlsx
-    primary_tag: 'Cross-sheet/file Retrieval'
-    difficulty: easy
-    task_type: MODIFY
-    max_steps: 15
-    grader:
-      type: programmatic
-      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
-
-  - id: finch_122
-    name: 'Summary / Visualization: Create a new sheet named “Exp by Fun Gen Support Chart5” and'
-    family: xlsx
-    primary_tag: 'Summary / Visualization'
-    difficulty: easy
-    task_type: MODIFY
-    max_steps: 15
+    split: eval
+    origin: finch
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
@@ -197,39 +1336,8 @@ tasks:
     difficulty: hard
     task_type: MODIFY
     max_steps: 15
-    grader:
-      type: programmatic
-      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
-
-  - id: finch_154
-    name: 'Data Entry / Import: Complete the missing Interreg co-financing data in the FR fi'
-    family: xlsx
-    primary_tag: 'Data Entry / Import'
-    difficulty: medium
-    task_type: MODIFY
-    max_steps: 15
-    grader:
-      type: programmatic
-      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
-
-  - id: finch_158
-    name: 'Validation / Review: Audit the workbook and correct the formula errors in place s'
-    family: xlsx
-    primary_tag: 'Validation / Review'
-    difficulty: hard
-    task_type: MODIFY
-    max_steps: 15
-    grader:
-      type: programmatic
-      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
-
-  - id: finch_168
-    name: 'Structuring / Formatting: Insert blank rows between adjacent tables in the workbook to'
-    family: xlsx
-    primary_tag: 'Structuring / Formatting'
-    difficulty: medium
-    task_type: MODIFY
-    max_steps: 15
+    split: eval
+    origin: finch
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
@@ -241,6 +1349,8 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: finch
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
@@ -252,6 +1362,8 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: finch
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
@@ -263,11 +1375,78 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: finch
     grader:
       type: programmatic
       description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
 
-  # ── Eval split — docx (4 tasks from OSWorld-Verified writer) ─
+  - id: finch_112
+    name: 'Cross-sheet/file Retrieval: For each record, use the Frequency to place the Rent amount '
+    family: xlsx
+    primary_tag: 'Cross-sheet/file Retrieval'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    split: eval
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_122
+    name: 'Summary / Visualization: Create a new sheet named “Exp by Fun Gen Support Chart5” and'
+    family: xlsx
+    primary_tag: 'Summary / Visualization'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    split: eval
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_154
+    name: 'Data Entry / Import: Complete the missing Interreg co-financing data in the FR fi'
+    family: xlsx
+    primary_tag: 'Data Entry / Import'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: eval
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_158
+    name: 'Validation / Review: Audit the workbook and correct the formula errors in place s'
+    family: xlsx
+    primary_tag: 'Validation / Review'
+    difficulty: hard
+    task_type: MODIFY
+    max_steps: 15
+    split: eval
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_168
+    name: 'Structuring / Formatting: Insert blank rows between adjacent tables in the workbook to'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    split: eval
+    origin: finch
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  # ── Eval split — OSWorld docx (4 tasks) ──────────────────────
 
   - id: osworld_0810415c
     name: 'compare_line_spacing: Make the line spacing of first two paragraph into double lin'
@@ -276,9 +1455,11 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: osworld
     grader:
       type: programmatic
-      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator (compare_docx_files / check_tabstops / has_page_numbers_in_footers / etc.). Score 0.001-0.999.'
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
 
   - id: osworld_0a0faba3
     name: 'check_tabstops: I would like to make the first three words of the sentence l'
@@ -287,9 +1468,11 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: osworld
     grader:
       type: programmatic
-      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator (compare_docx_files / check_tabstops / has_page_numbers_in_footers / etc.). Score 0.001-0.999.'
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
 
   - id: osworld_0b17a146
     name: 'compare_docx_files: Help me change the 2 in "H2O" to a subscript.'
@@ -298,9 +1481,11 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: osworld
     grader:
       type: programmatic
-      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator (compare_docx_files / check_tabstops / has_page_numbers_in_footers / etc.). Score 0.001-0.999.'
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
 
   - id: osworld_66399b0d
     name: 'compare_docx_tables: Could you help me insert a 7(columns)*5(rows) empty table at'
@@ -309,11 +1494,13 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: osworld
     grader:
       type: programmatic
-      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator (compare_docx_files / check_tabstops / has_page_numbers_in_footers / etc.). Score 0.001-0.999.'
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator. Score 0.001-0.999.'
 
-  # ── Eval split — pptx (8 tasks from PPTArena) ────────────────
+  # ── Eval split — PPTArena pptx (8 tasks) ─────────────────────
 
   - id: pptarena_case_26_match_slide_colors_to_theme
     name: 'Theme & Background: Case 26: Match Slide Colors to Theme'
@@ -322,9 +1509,11 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: pptarena
     grader:
       type: programmatic
-      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
 
   - id: pptarena_case_32_arrange_image_and_text
     name: 'Images & Pictures: Case 32: Arrange Image and Text'
@@ -333,9 +1522,11 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: pptarena
     grader:
       type: programmatic
-      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
 
   - id: pptarena_case_35_structural_fix
     name: 'Text & Typography: Case 35: Structural Fix'
@@ -344,9 +1535,11 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: pptarena
     grader:
       type: programmatic
-      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
 
   - id: pptarena_case_36_add_speaker_notes
     name: 'Slide/Section Management & Footers: Case 36: Add Speaker Notes'
@@ -355,9 +1548,11 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: pptarena
     grader:
       type: programmatic
-      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
 
   - id: pptarena_case_40_hindu_center_titles
     name: 'Text & Typography: Case 40: Hindu Center Titles'
@@ -366,9 +1561,11 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: pptarena
     grader:
       type: programmatic
-      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
 
   - id: pptarena_case_49_normalize_thousand_separators
     name: 'Tables: Case 49: Normalize Thousand Separators'
@@ -377,9 +1574,11 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: pptarena
     grader:
       type: programmatic
-      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
 
   - id: pptarena_case_60_fix_text_placement
     name: 'Alignment, Distribution & Z-order: Case 60: Fix Text Placement'
@@ -388,9 +1587,11 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: pptarena
     grader:
       type: programmatic
-      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'
 
   - id: pptarena_case_7_update_quarter_two_data_b
     name: 'Charts: Case 7: Update Quarter Two Data (B)'
@@ -399,14 +1600,8 @@ tasks:
     difficulty: medium
     task_type: MODIFY
     max_steps: 15
+    split: eval
+    origin: pptarena
     grader:
       type: programmatic
-      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
-
-  # ── Train-only tasks (not enumerated; total 87) ───────────────────
-  # 40 Finch xlsx · 17 OSWorld docx · 30 PPTArena pptx
-  # Loaded at runtime from data/manifest.jsonl. Use the Python API:
-  #
-  #   from tasks import TASKS, split_ids
-  #   train_ids = split_ids('train')
-  #   eval_ids  = split_ids('eval')
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% pos + 20% size). Score 0.001-0.999.'

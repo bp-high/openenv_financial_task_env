@@ -637,7 +637,7 @@ def build_dashboard() -> gr.Blocks:
         with gr.Row():
             for label, n in [
                 ("total tasks", total_tasks),
-                (".xlsx (Finch + curated)", counts.get("xlsx", 0)),
+                (".xlsx (Finch — 10 hand-curated + 50 stratified)", counts.get("xlsx", 0)),
                 (".docx (OSWorld-Verified)", counts.get("docx", 0)),
                 (".pptx (PPTArena)", counts.get("pptx", 0)),
             ]:
