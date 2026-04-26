@@ -45,6 +45,7 @@ import gc
 import json
 import os
 import sys
+import textwrap
 import time
 from datetime import datetime
 from pathlib import Path
@@ -86,6 +87,11 @@ def load_base_and_tokenizer(base_model_id: str):
     tokenizer = AutoTokenizer.from_pretrained(base_model_id, use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+    # CRITICAL: drop oldest tokens (system prompt + early turns) when context
+    # overflows, NOT the most recent user feedback.  Default is "right" which
+    # would silently strip the env's "your code failed: ..." message — leaving
+    # the model with stale state, causing it to loop the same code at temp=0.
+    tokenizer.truncation_side = "left"
 
     bf16_ok = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
     dtype = torch.bfloat16 if bf16_ok else (
@@ -101,6 +107,48 @@ def load_base_and_tokenizer(base_model_id: str):
     )
     model.eval()
     return tokenizer, model
+
+
+def preflight_check() -> bool:
+    """Verify the env's code-execution subprocess can import every library
+    the agent might use.  The env spawns a fresh subprocess per code step
+    via ``subprocess.run([sys.executable, '-c', code])`` — if pip install
+    landed in a different Python than sys.executable, every code step will
+    fail with ImportError, and the model will loop indefinitely.
+
+    Runs ONE tiny test before any expensive eval starts.  Returns True if
+    all libraries import cleanly in the subprocess.
+    """
+    import subprocess
+    test_code = textwrap.dedent("""
+        import sys
+        print(f'PY={sys.executable}')
+        for lib in ('openpyxl', 'docx', 'pptx', 'PIL', 'rapidfuzz'):
+            try:
+                __import__(lib)
+                print(f'{lib}: OK')
+            except Exception as e:
+                print(f'{lib}: FAIL  {type(e).__name__}: {e}')
+    """).strip()
+    print("\n=== Preflight: env subprocess library check ===")
+    try:
+        r = subprocess.run(
+            [sys.executable, "-c", test_code],
+            capture_output=True, text=True, timeout=30,
+        )
+        print(r.stdout)
+        if r.stderr.strip():
+            print("STDERR:", r.stderr)
+    except Exception as e:
+        print(f"  preflight subprocess crashed: {e}")
+        return False
+    if "FAIL" in r.stdout:
+        print("⚠ Some libraries are missing in the subprocess.  Install with:")
+        print("    pip install openpyxl python-docx python-pptx Pillow rapidfuzz")
+        print("  Eval will fail every code step until this is fixed.")
+        return False
+    print("✓ All required libraries import cleanly in subprocess.\n")
+    return True
 
 
 def attach_lora(base_model, adapter_id_or_path: str):
@@ -141,8 +189,16 @@ def detach_lora(peft_model):
 
 def generate_response(tokenizer, model, messages: List[Dict[str, str]],
                        max_new_tokens: int, temperature: float,
-                       max_input_tokens: int = 12000) -> str:
-    """Tokenize chat-template-formatted messages, generate, decode."""
+                       max_input_tokens: int = 28000) -> str:
+    """Tokenize chat-template-formatted messages, generate, decode.
+
+    `max_input_tokens` is generous (28K) because Qwen2.5-Coder-3B has a 32K
+    context and our trajectories grow long after ~5 steps of feedback.  When
+    truncation kicks in, it drops from the LEFT (oldest first) per the
+    `truncation_side='left'` set on the tokenizer at load — keeping the most
+    recent env feedback in context, which is the only signal that lets the
+    agent recover from errors.
+    """
     import torch
 
     prompt = tokenizer.apply_chat_template(
@@ -417,6 +473,15 @@ def main() -> int:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         parent_out = REPO_ROOT / "runs" / f"eval_lora_{ts}"
     parent_out.mkdir(parents=True, exist_ok=True)
+
+    # Preflight: confirm the env's subprocess can import every library
+    # the agent will need.  If this fails, ALL code steps will error and
+    # the eval is wasted.  Better to crash fast than burn an hour on
+    # ImportError loops.
+    if not preflight_check():
+        print("\nABORT: preflight failed.  Fix the missing libs and re-run.",
+              file=sys.stderr)
+        return 1
 
     # Tokenizer + base model — loaded ONCE, reused across adapters
     tokenizer, base_model = load_base_and_tokenizer(args.base_model)
