@@ -983,7 +983,62 @@ without spending a cent.
 
 ---
 
-## Current state (post-Phase 9.1)
+## Phase 10 — SFT training script
+
+**Goal:** warm-start `Qwen2.5-Coder-3B-Instruct` on the SFT corpus built
+in Phase 8, before GRPO. Per the $45 budget plan (1× A100 80GB on HF Jobs
+@ $2.50/hr), SFT runs ~6h ≈ $15 leaving ~$30 for GRPO + eval.
+
+### New file
+- [`train_sft.py`](train_sft.py) — TRL `SFTTrainer` driver. Loads the
+  `messages`-format JSONL, applies the model's chat template, masks loss
+  on user/system tokens (assistant-only loss), trains a LoRA adapter,
+  optionally pushes to HF Hub.
+
+### Key choices
+
+| Decision | Why |
+|---|---|
+| **`assistant_only_loss=True`** | Multi-turn agent SFT — we don't want to train on env-generated user feedback, only on assistant turns (the things the model produces) |
+| **LoRA r=32, alpha=64, all-linear targets** | Sweet spot for 3B+ models; full-FT memory cost is unjustified for a $45 budget |
+| **bf16 + gradient checkpointing + 8K seq len** | Fits a 3B model + 32-rank LoRA + 8K context comfortably on A100 80GB; can be dropped to 4K + r=16 for L40S 48GB |
+| **`packing=False`** | Multi-turn examples are too varied to pack cleanly; each episode is its own sample |
+| **CLI: `--push-to-hub`** | Optional push for the GRPO step to pull the SFT adapter from Hub instead of local disk |
+| **CLI: `--use-qlora`** | 4-bit quantization fallback for tighter VRAM (e.g. consumer GPU dev) |
+
+### Command (HF Jobs)
+
+```bash
+hf jobs run \
+  --hardware "Nvidia A100 - large" \
+  --timeout 8h \
+  --image "huggingface/transformers-pytorch-gpu:latest" \
+  --secrets HF_TOKEN \
+  -- \
+  bash -c "pip install -U 'trl>=0.11' peft accelerate bitsandbytes && \
+           python train_sft.py \
+             --dataset data/sft_kimi_k25.jsonl \
+             --output-dir /tmp/qwen3b-sft \
+             --push-to-hub bpHigh/qwen3b-office-sft"
+```
+
+### Local smoke test
+
+The argparse layer imports cleanly without GPU. The full training requires
+a GPU + the trl/peft/accelerate stack — not run locally as part of CI; the
+real validation is the HF Jobs run.
+
+### Modified files
+
+- None (new file only)
+
+### Files unchanged in Phase 10
+
+- env server, graders, manifest, data, deps
+
+---
+
+## Current state (post-Phase 10)
 
 ### Repo layout
 
