@@ -578,6 +578,24 @@ def build_dashboard() -> gr.Blocks:
             "Hardware: 1× L40S 48GB on HF Jobs ($1.80/hr). "
             "Total SFT cost: **under $2**."
         )
+        gr.Markdown(
+            "**Training artifacts** — every run is reproducible from these:\n\n"
+            "| Run | Adapter on Hub | Raw stdout log | HF Job page | Loss curve |\n"
+            "|---|---|---|---|---|\n"
+            "| 4K context | "
+            "[bpHigh/qwen3b-office-sft-kimi](https://huggingface.co/bpHigh/qwen3b-office-sft-kimi) | "
+            "[raw_logs.txt](https://raw.githubusercontent.com/bp-high/openenv_financial_task_env/main/runs/sft_plots/qwen3b_kimi/raw_logs.txt) | "
+            "[Job 69ed74ae...4fc](https://huggingface.co/jobs/bpHigh/69ed74aed70108f37acdf4fc) | "
+            "[PNG](https://raw.githubusercontent.com/bp-high/openenv_financial_task_env/main/runs/sft_plots/qwen3b_kimi/sft_loss_curve.png) |\n"
+            "| 8K context | "
+            "[bpHigh/qwen3b-office-sft-kimi-long](https://huggingface.co/bpHigh/qwen3b-office-sft-kimi-long) | "
+            "[raw_logs.txt](https://raw.githubusercontent.com/bp-high/openenv_financial_task_env/main/runs/sft_plots/qwen3b_kimi_long/raw_logs.txt) | "
+            "[Job 69ed7b51...ef4](https://huggingface.co/jobs/bpHigh/69ed7b51d2c8bd8662bceef4) | "
+            "[PNG](https://raw.githubusercontent.com/bp-high/openenv_financial_task_env/main/runs/sft_plots/qwen3b_kimi_long/sft_loss_curve.png) |\n\n"
+            "Re-parse the raw logs into clean metrics + plots with "
+            "[`data_pipeline/analyze_sft_logs.py`](https://github.com/bp-high/openenv_financial_task_env/blob/main/data_pipeline/analyze_sft_logs.py) "
+            "(works on any HF Job ID, not just these two)."
+        )
 
         # ---- Plot ----
         gr.Markdown("## 4K vs 8K context length ablation")

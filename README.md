@@ -110,10 +110,17 @@ debugging trajectories from Kimi (5–8 of 53 episodes get truncated at 4K).
 Same convergence target, harder distribution → which configuration generalizes
 better is what the eval will tell us.
 
-**Where the training logs live:**
-- HF Jobs page (raw logs streamable): [Job 4K](https://huggingface.co/jobs/bpHigh/69ed74aed70108f37acdf4fc) · [Job 8K](https://huggingface.co/jobs/bpHigh/69ed7b51d2c8bd8662bceef4)
-- Parsed metrics + plots: [`runs/sft_plots/`](runs/sft_plots/)
-- Loss-curve generator: [`data_pipeline/analyze_sft_logs.py`](data_pipeline/analyze_sft_logs.py) (re-runnable on any HF Job ID)
+**Training artifacts — every run is reproducible from these:**
+
+| Run | Adapter on Hub | Raw stdout log | HF Job page | Loss curve |
+|---|---|---|---|---|
+| 4K context | [bpHigh/qwen3b-office-sft-kimi](https://huggingface.co/bpHigh/qwen3b-office-sft-kimi) | [raw_logs.txt](https://raw.githubusercontent.com/bp-high/openenv_financial_task_env/main/runs/sft_plots/qwen3b_kimi/raw_logs.txt) ([repo path](runs/sft_plots/qwen3b_kimi/raw_logs.txt)) | [Job 69ed74ae…4fc](https://huggingface.co/jobs/bpHigh/69ed74aed70108f37acdf4fc) | [PNG](runs/sft_plots/qwen3b_kimi/sft_loss_curve.png) |
+| 8K context | [bpHigh/qwen3b-office-sft-kimi-long](https://huggingface.co/bpHigh/qwen3b-office-sft-kimi-long) | [raw_logs.txt](https://raw.githubusercontent.com/bp-high/openenv_financial_task_env/main/runs/sft_plots/qwen3b_kimi_long/raw_logs.txt) ([repo path](runs/sft_plots/qwen3b_kimi_long/raw_logs.txt)) | [Job 69ed7b51…ef4](https://huggingface.co/jobs/bpHigh/69ed7b51d2c8bd8662bceef4) | [PNG](runs/sft_plots/qwen3b_kimi_long/sft_loss_curve.png) |
+
+Re-parse any HF Job's stdout into clean metrics + a loss curve PNG with
+[`data_pipeline/analyze_sft_logs.py`](data_pipeline/analyze_sft_logs.py)
+— takes a `--job-id` and emits `training_metrics.jsonl`, `summary.json`,
+and `sft_loss_curve.png`. Both runs above were generated this way.
 
 ---
 
