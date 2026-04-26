@@ -1,87 +1,412 @@
 spec_version: 1
-name: financial_task_env
+name: office_document_task_env
 type: space
 runtime: fastapi
 app: server.app:app
 port: 8000
 
+# Cross-format RL environment for office-document tasks.
+# Sources: FinWorkBench/Finch (xlsx) + OSWorld-Verified (docx) + PPTArena (pptx).
+#
+# 10 hand-curated xlsx + 50 Finch xlsx + 21 OSWorld docx + 38 PPTArena pptx
+# = 119 total tasks · 97 train + 22 eval.
+#
+# Round-1 baseline hand-curated tasks (task_1..task_10) are listed below
+# explicitly.  The 22-task eval split (10 xlsx + 4 docx + 8 pptx) is also
+# enumerated for benchmark reproducibility.  The remaining 87 training-only
+# tasks are loaded at runtime from data/manifest.jsonl — listing them all
+# here would balloon this file.
+
+metadata:
+  total_tasks: 119
+  splits:
+    train: 97
+    eval: 22
+  families:
+    xlsx: 60
+    docx: 21
+    pptx: 38
+  data_sources:
+    - name: Finch (FinWorkBench)
+      url: https://huggingface.co/datasets/FinWorkBench/Finch
+      family: xlsx
+      tasks: 50
+    - name: OSWorld-Verified (libreoffice_writer)
+      url: https://github.com/xlang-ai/OSWorld
+      family: docx
+      tasks: 21
+    - name: PPTArena
+      url: https://github.com/michaelofengend/PPTArena
+      family: pptx
+      tasks: 38
+  manifest_path: data/manifest.jsonl
+
 tasks:
+
+  # ── Hand-curated Round-1 tasks (xlsx) ─────────────────────────
+
   - id: task_1
-    name: Count Plants in Spreadsheet
+    name: 'Count Plants in Spreadsheet'
+    family: xlsx
+    primary_tag: 'Cross-sheet/file Retrieval'
     difficulty: easy
+    task_type: QA
     max_steps: 15
     grader:
       type: programmatic
-      description: "QA grading — extracts numbers from agent answer, compares against reference (85). Score 0.001–0.999 based on numeric match with 5% tolerance."
+      description: "QA (xlsx) — extract numbers from agent's text answer, compare against reference value. 80% numeric match (5% tolerance) + 20% keyword overlap. Score 0.001-0.999."
 
   - id: task_2
-    name: Retrieve TW EOL Charge
+    name: 'Retrieve TW EOL Charge'
+    family: xlsx
+    primary_tag: 'Cross-sheet/file Retrieval'
     difficulty: easy
+    task_type: QA
     max_steps: 15
     grader:
       type: programmatic
-      description: "QA grading — extracts numbers from agent answer, compares against reference (113291). Score 0.001–0.999 based on numeric match with 5% tolerance."
+      description: "QA (xlsx) — extract numbers from agent's text answer, compare against reference value. 80% numeric match (5% tolerance) + 20% keyword overlap. Score 0.001-0.999."
 
   - id: task_3
-    name: Portfolio Mark-to-Market Change
-    difficulty: easy
+    name: 'Portfolio Mark-to-Market Change'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: QA
     max_steps: 15
     grader:
       type: programmatic
-      description: "QA grading — extracts numbers from agent answer, compares against reference ($1,989,600 and 27.9%). Score 0.001–0.999 based on numeric match + keyword overlap."
+      description: "QA (xlsx) — extract numbers from agent's text answer, compare against reference value. 80% numeric match (5% tolerance) + 20% keyword overlap. Score 0.001-0.999."
 
   - id: task_4
-    name: Summarize Pipeline Imbalances
+    name: 'Summarize Pipeline Imbalances'
+    family: xlsx
+    primary_tag: 'Calculation'
     difficulty: medium
+    task_type: MODIFY
     max_steps: 15
     grader:
       type: programmatic
-      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
 
   - id: task_5
-    name: Audit and Correct Formula Errors
-    difficulty: medium
+    name: 'Audit and Correct Formula Errors'
+    family: xlsx
+    primary_tag: 'Validation / Review'
+    difficulty: hard
+    task_type: MODIFY
     max_steps: 15
     grader:
       type: programmatic
-      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
 
   - id: task_6
-    name: Create Table and Apply Filter
+    name: 'Create Table and Apply Filter'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
     difficulty: medium
+    task_type: MODIFY
     max_steps: 15
     grader:
       type: programmatic
-      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
 
   - id: task_7
-    name: Add Weekday Row and Data Entry
+    name: 'Add Weekday Row and Data Entry'
+    family: xlsx
+    primary_tag: 'Data Entry / Import'
     difficulty: medium
+    task_type: MODIFY
     max_steps: 15
     grader:
       type: programmatic
-      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
 
   - id: task_8
-    name: Balance Sheet Validation and Indicators
+    name: 'Balance Sheet Validation and Indicators'
+    family: xlsx
+    primary_tag: 'Validation / Review'
     difficulty: hard
+    task_type: MODIFY
     max_steps: 15
     grader:
       type: programmatic
-      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
 
   - id: task_9
-    name: Create Scenario3 Worksheet
+    name: 'Create Scenario3 Worksheet'
+    family: xlsx
+    primary_tag: 'Financial Modeling'
     difficulty: hard
+    task_type: MODIFY
     max_steps: 15
     grader:
       type: programmatic
-      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
 
   - id: task_10
-    name: Consolidate by Type and Area
-    difficulty: hard
+    name: 'Consolidate by Type and Area'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
     max_steps: 15
     grader:
       type: programmatic
-      description: "MODIFY grading — compares agent output xlsx cell-by-cell against reference workbook. 30% sheet-name match + 70% cell-level match (2% numeric tolerance). Score 0.001–0.999."
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  # ── Eval split — xlsx (10 tasks from Finch) ──────────────────
+
+  - id: finch_10
+    name: 'Calculation: Per the headers and established formula logic, populate form'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_112
+    name: 'Cross-sheet/file Retrieval: For each record, use the Frequency to place the Rent amount '
+    family: xlsx
+    primary_tag: 'Cross-sheet/file Retrieval'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_122
+    name: 'Summary / Visualization: Create a new sheet named “Exp by Fun Gen Support Chart5” and'
+    family: xlsx
+    primary_tag: 'Summary / Visualization'
+    difficulty: easy
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_14
+    name: 'Financial Modeling: Suppose we need to hold a 0.5-year AA(2) municipal investmen'
+    family: xlsx
+    primary_tag: 'Financial Modeling'
+    difficulty: hard
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_154
+    name: 'Data Entry / Import: Complete the missing Interreg co-financing data in the FR fi'
+    family: xlsx
+    primary_tag: 'Data Entry / Import'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_158
+    name: 'Validation / Review: Audit the workbook and correct the formula errors in place s'
+    family: xlsx
+    primary_tag: 'Validation / Review'
+    difficulty: hard
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_168
+    name: 'Structuring / Formatting: Insert blank rows between adjacent tables in the workbook to'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_35
+    name: 'Calculation: Summarize the volume and dollar imbalances that exist betwee'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_38
+    name: 'Calculation: Using the discount rate assumptions in the table and each Sh'
+    family: xlsx
+    primary_tag: 'Calculation'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  - id: finch_59
+    name: 'Structuring / Formatting: Update the TOTAL PHYSICAL GAS tab to mirror the layout on TO'
+    family: xlsx
+    primary_tag: 'Structuring / Formatting'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (xlsx) — 30% sheet-name match + 70% cell-level diff against gold reference (2% numeric tolerance). Score 0.001-0.999.'
+
+  # ── Eval split — docx (4 tasks from OSWorld-Verified writer) ─
+
+  - id: osworld_0810415c
+    name: 'compare_line_spacing: Make the line spacing of first two paragraph into double lin'
+    family: docx
+    primary_tag: 'compare_line_spacing'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator (compare_docx_files / check_tabstops / has_page_numbers_in_footers / etc.). Score 0.001-0.999.'
+
+  - id: osworld_0a0faba3
+    name: 'check_tabstops: I would like to make the first three words of the sentence l'
+    family: docx
+    primary_tag: 'check_tabstops'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator (compare_docx_files / check_tabstops / has_page_numbers_in_footers / etc.). Score 0.001-0.999.'
+
+  - id: osworld_0b17a146
+    name: 'compare_docx_files: Help me change the 2 in "H2O" to a subscript.'
+    family: docx
+    primary_tag: 'compare_docx_files'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator (compare_docx_files / check_tabstops / has_page_numbers_in_footers / etc.). Score 0.001-0.999.'
+
+  - id: osworld_66399b0d
+    name: 'compare_docx_tables: Could you help me insert a 7(columns)*5(rows) empty table at'
+    family: docx
+    primary_tag: 'compare_docx_tables'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (docx) — 3-layer: validity gate (python-docx parse) + 40% paragraph diff + 60% per-task OSWorld evaluator (compare_docx_files / check_tabstops / has_page_numbers_in_footers / etc.). Score 0.001-0.999.'
+
+  # ── Eval split — pptx (8 tasks from PPTArena) ────────────────
+
+  - id: pptarena_case_26_match_slide_colors_to_theme
+    name: 'Theme & Background: Case 26: Match Slide Colors to Theme'
+    family: pptx
+    primary_tag: 'Theme & Background'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_32_arrange_image_and_text
+    name: 'Images & Pictures: Case 32: Arrange Image and Text'
+    family: pptx
+    primary_tag: 'Images & Pictures'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_35_structural_fix
+    name: 'Text & Typography: Case 35: Structural Fix'
+    family: pptx
+    primary_tag: 'Text & Typography'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_36_add_speaker_notes
+    name: 'Slide/Section Management & Footers: Case 36: Add Speaker Notes'
+    family: pptx
+    primary_tag: 'Slide/Section Management & Footers'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_40_hindu_center_titles
+    name: 'Text & Typography: Case 40: Hindu Center Titles'
+    family: pptx
+    primary_tag: 'Text & Typography'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_49_normalize_thousand_separators
+    name: 'Tables: Case 49: Normalize Thousand Separators'
+    family: pptx
+    primary_tag: 'Tables'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_60_fix_text_placement
+    name: 'Alignment, Distribution & Z-order: Case 60: Fix Text Placement'
+    family: pptx
+    primary_tag: 'Alignment, Distribution & Z-order'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+
+  - id: pptarena_case_7_update_quarter_two_data_b
+    name: 'Charts: Case 7: Update Quarter Two Data (B)'
+    family: pptx
+    primary_tag: 'Charts'
+    difficulty: medium
+    task_type: MODIFY
+    max_steps: 15
+    grader:
+      type: programmatic
+      description: 'MODIFY (pptx) — 2-layer: validity gate (python-pptx parse) + 20% slide-count + 80% avg per-shape composite (40% text + 20% style + 20% position + 20% size). Score 0.001-0.999.'
+
+  # ── Train-only tasks (not enumerated; total 87) ───────────────────
+  # 40 Finch xlsx · 17 OSWorld docx · 30 PPTArena pptx
+  # Loaded at runtime from data/manifest.jsonl. Use the Python API:
+  #
+  #   from tasks import TASKS, split_ids
+  #   train_ids = split_ids('train')
+  #   eval_ids  = split_ids('eval')
