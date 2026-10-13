@@ -1,0 +1,45 @@
+name: build-finance-desk
+
+# Builds the Finance Desk linux/amd64 image and pushes it to GHCR. The workflow's own GITHUB_TOKEN
+# has packages:write, so no personal token is needed. After the first run, make the GHCR package public:
+# GitHub -> Packages -> finance-desk -> Package settings -> Change visibility -> Public.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev/pensive-lovelace-bt5rsn]
+    paths: ["finance_desk/**", ".github/workflows/build-finance-desk.yml"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./finance_desk
+          file: ./finance_desk/Dockerfile
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/finance-desk:v1
+            ghcr.io/${{ github.repository_owner }}/finance-desk:${{ github.sha }}
+
+      - name: Print digest
+        run: echo "Pushed ghcr.io/${{ github.repository_owner }}/finance-desk:v1"

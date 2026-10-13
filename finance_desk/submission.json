@@ -1,0 +1,502 @@
+{
+  "submission_id": "finance-desk-v1",
+  "name": "Finance Desk: procedural multi-domain environment",
+  "image": "ghcr.io/bp-high/finance-desk:v1",
+  "schema": {
+    "action": {
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Additional metadata for the action",
+          "title": "Metadata",
+          "type": "object"
+        },
+        "tool": {
+          "description": "One of: list, read, python, submit.",
+          "title": "Tool",
+          "type": "string"
+        },
+        "args": {
+          "additionalProperties": true,
+          "description": "Tool arguments. read: {\"path\": \"file.csv\"} or {\"paths\": [\"a.csv\", \"b.json\"]}. python: {\"code\": \"print(1+1)\"}. submit: {\"answer\": {...the documented keys...}}. list: {}.",
+          "title": "Args",
+          "type": "object"
+        }
+      },
+      "required": [
+        "tool"
+      ],
+      "title": "DeskAction",
+      "type": "object"
+    },
+    "observation": {
+      "additionalProperties": false,
+      "properties": {
+        "done": {
+          "default": false,
+          "description": "Whether the episode has terminated",
+          "title": "Done",
+          "type": "boolean"
+        },
+        "reward": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Reward signal from the last action",
+          "title": "Reward"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Additional metadata for the observation",
+          "title": "Metadata",
+          "type": "object"
+        },
+        "output": {
+          "default": "",
+          "description": "Task brief at reset, otherwise the result of the last tool call.",
+          "title": "Output",
+          "type": "string"
+        },
+        "steps_left": {
+          "default": 0,
+          "description": "Tool calls left before the episode ends with reward 0.",
+          "title": "Steps Left",
+          "type": "integer"
+        }
+      },
+      "title": "DeskObservation",
+      "type": "object"
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "ar_aging-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "bank_recon-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "bond_price-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "cap_table-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "covenant-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "dcf_npv-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "depreciation-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "fx_consolidation-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "inventory_cogs-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "loan_amort-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "payroll-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "pe_waterfall-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "portfolio_return-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "real_growth-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "ar_aging-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "bank_recon-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "bond_price-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "cap_table-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "office_expense-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "office_meeting-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "office_expense-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "office_meeting-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "office_expense-l1",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "ind_oee-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "ind_tank-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "ind_oee-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "ind_tank-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "ind_oee-l1",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sw_impact-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sw_resolver-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sw_impact-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sw_resolver-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sw_impact-l1",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sci_calibration-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sci_kinetics-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sci_calibration-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sci_kinetics-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sci_calibration-l1",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "math_coins-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "math_route-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "math_coins-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "math_route-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sec_auth-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sec_firewall-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sec_auth-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "sec_firewall-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "media_edl-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "media_music-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "media_srt-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    },
+    {
+      "task_id": "media_edl-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 900,
+      "verifier_wall_s": 30,
+      "tool_wall_s": 120
+    }
+  ],
+  "example_actions": [
+    {
+      "tool": "submit",
+      "args": {
+        "answer": {}
+      }
+    }
+  ],
+  "finish_action": {
+    "tool": "submit",
+    "args": {
+      "answer": {}
+    }
+  },
+  "dataset": "bpHigh/finance-desk",
+  "source": "https://github.com/bp-high/openenv_financial_task_env/tree/dev/pensive-lovelace-bt5rsn/finance_desk"
+}

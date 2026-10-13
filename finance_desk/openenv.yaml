@@ -1,0 +1,32 @@
+spec_version: 1
+name: finance_desk
+version: 1.0.0
+type: space
+runtime: fastapi
+app: fdesk.server.app:app
+port: 8000
+
+# Finance Desk: a procedural, deterministic OpenEnv environment. Deep finance & economics (14 families) plus
+# 1-2 families for each of the other seven arena domains, so one policy trains across all eight. Each reset
+# builds a fresh small workspace of CSV/JSON/memo files; the agent reads them, computes with a sandboxed
+# python tool (run as `nobody`), and submits one JSON answer. Reward is all-or-nothing: 1 only if every
+# documented field is exactly right, else 0. Higher levels add a notice file that overrides part of the data,
+# so an agent that stops before reading everything scores 0.
+
+metadata:
+  action_schema: '{tool, args} — tools: list, read, python, submit'
+  reward: all-or-nothing (exact), in [0, 1]
+  families: 29
+  domains:
+    - finance and economics
+    - office and white-collar work
+    - industrial and physical systems
+    - software engineering
+    - natural science
+    - math and formal reasoning
+    - cybersecurity
+    - media and content production
+  sources:
+    - name: hand-authored procedural generators + deterministic verifiers
+    - name: music family derived from XiaomiMiMo/MiMo-V2.6-RL-oss (Apache-2.0)
+      url: https://huggingface.co/datasets/XiaomiMiMo/MiMo-V2.6-RL-oss
