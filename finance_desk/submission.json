@@ -441,6 +441,146 @@
       "tool_wall_s": 120,
       "completion_tokens": 8192,
       "context_tokens": 16384
+    },
+    {
+      "task_id": "math_route-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "math_route-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "media_srt-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "sci_kinetics-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "sec_auth-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "sec_firewall-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "sec_firewall-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "bond_price-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "covenant-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "dcf_npv-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "fx_consolidation-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "inventory_cogs-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "loan_amort-l3",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
+    },
+    {
+      "task_id": "payroll-l2",
+      "split": "train",
+      "reset_wall_s": 120,
+      "rollout_wall_s": 300,
+      "verifier_wall_s": 15,
+      "tool_wall_s": 120,
+      "completion_tokens": 8192,
+      "context_tokens": 16384
     }
   ],
   "example_actions": [
