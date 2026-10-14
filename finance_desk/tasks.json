@@ -10,16 +10,6 @@
   "context_tokens": 16384
  },
  {
-  "task_id": "office_meeting-l1",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
   "task_id": "office_expense-l2",
   "split": "train",
   "reset_wall_s": 120,
@@ -30,7 +20,7 @@
   "context_tokens": 16384
  },
  {
-  "task_id": "office_meeting-l2",
+  "task_id": "office_expense-l3",
   "split": "train",
   "reset_wall_s": 120,
   "rollout_wall_s": 300,
@@ -40,7 +30,17 @@
   "context_tokens": 16384
  },
  {
-  "task_id": "office_expense-l3",
+  "task_id": "office_meeting-l1",
+  "split": "train",
+  "reset_wall_s": 120,
+  "rollout_wall_s": 300,
+  "verifier_wall_s": 15,
+  "tool_wall_s": 120,
+  "completion_tokens": 8192,
+  "context_tokens": 16384
+ },
+ {
+  "task_id": "office_meeting-l2",
   "split": "train",
   "reset_wall_s": 120,
   "rollout_wall_s": 300,
@@ -80,36 +80,6 @@
   "context_tokens": 16384
  },
  {
-  "task_id": "ind_oee-l2",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "ind_tank-l2",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "ind_oee-l3",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
   "task_id": "ind_tank-l3",
   "split": "train",
   "reset_wall_s": 120,
@@ -120,7 +90,7 @@
   "context_tokens": 16384
  },
  {
-  "task_id": "ar_aging-l1",
+  "task_id": "ar_aging-l2",
   "split": "train",
   "reset_wall_s": 120,
   "rollout_wall_s": 300,
@@ -131,6 +101,16 @@
  },
  {
   "task_id": "bank_recon-l1",
+  "split": "train",
+  "reset_wall_s": 120,
+  "rollout_wall_s": 300,
+  "verifier_wall_s": 15,
+  "tool_wall_s": 120,
+  "completion_tokens": 8192,
+  "context_tokens": 16384
+ },
+ {
+  "task_id": "bank_recon-l2",
   "split": "train",
   "reset_wall_s": 120,
   "rollout_wall_s": 300,
@@ -210,16 +190,6 @@
   "context_tokens": 16384
  },
  {
-  "task_id": "loan_amort-l1",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
   "task_id": "payroll-l1",
   "split": "train",
   "reset_wall_s": 120,
@@ -260,7 +230,7 @@
   "context_tokens": 16384
  },
  {
-  "task_id": "ar_aging-l2",
+  "task_id": "math_coins-l1",
   "split": "train",
   "reset_wall_s": 120,
   "rollout_wall_s": 300,
@@ -270,7 +240,17 @@
   "context_tokens": 16384
  },
  {
-  "task_id": "bank_recon-l2",
+  "task_id": "math_coins-l2",
+  "split": "train",
+  "reset_wall_s": 120,
+  "rollout_wall_s": 300,
+  "verifier_wall_s": 15,
+  "tool_wall_s": 120,
+  "completion_tokens": 8192,
+  "context_tokens": 16384
+ },
+ {
+  "task_id": "math_route-l1",
   "split": "train",
   "reset_wall_s": 120,
   "rollout_wall_s": 300,
@@ -310,27 +290,47 @@
   "context_tokens": 16384
  },
  {
-  "task_id": "media_edl-l2",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "media_music-l2",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
   "task_id": "media_srt-l2",
+  "split": "train",
+  "reset_wall_s": 120,
+  "rollout_wall_s": 300,
+  "verifier_wall_s": 15,
+  "tool_wall_s": 120,
+  "completion_tokens": 8192,
+  "context_tokens": 16384
+ },
+ {
+  "task_id": "sci_calibration-l2",
+  "split": "train",
+  "reset_wall_s": 120,
+  "rollout_wall_s": 300,
+  "verifier_wall_s": 15,
+  "tool_wall_s": 120,
+  "completion_tokens": 8192,
+  "context_tokens": 16384
+ },
+ {
+  "task_id": "sci_kinetics-l1",
+  "split": "train",
+  "reset_wall_s": 120,
+  "rollout_wall_s": 300,
+  "verifier_wall_s": 15,
+  "tool_wall_s": 120,
+  "completion_tokens": 8192,
+  "context_tokens": 16384
+ },
+ {
+  "task_id": "sec_auth-l1",
+  "split": "train",
+  "reset_wall_s": 120,
+  "rollout_wall_s": 300,
+  "verifier_wall_s": 15,
+  "tool_wall_s": 120,
+  "completion_tokens": 8192,
+  "context_tokens": 16384
+ },
+ {
+  "task_id": "sec_auth-l2",
   "split": "train",
   "reset_wall_s": 120,
   "rollout_wall_s": 300,
@@ -351,146 +351,6 @@
  },
  {
   "task_id": "sw_resolver-l1",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sw_impact-l2",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sw_resolver-l2",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sw_impact-l3",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sci_calibration-l1",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sci_kinetics-l1",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sci_calibration-l2",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sci_kinetics-l2",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sci_calibration-l3",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "math_coins-l1",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "math_route-l1",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "math_coins-l2",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sec_auth-l1",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sec_firewall-l1",
-  "split": "train",
-  "reset_wall_s": 120,
-  "rollout_wall_s": 300,
-  "verifier_wall_s": 15,
-  "tool_wall_s": 120,
-  "completion_tokens": 8192,
-  "context_tokens": 16384
- },
- {
-  "task_id": "sec_auth-l2",
   "split": "train",
   "reset_wall_s": 120,
   "rollout_wall_s": 300,
