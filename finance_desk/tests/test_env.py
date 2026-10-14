@@ -100,5 +100,5 @@ def test_brief_is_short():
     env = FinanceDeskEnvironment()
     for t in task_ids():
         obs = env.reset(seed=0, task_id=t)
-        assert len(obs.output) < 3200, (t, len(obs.output))
+        assert len(obs.output) < 8000, (t, len(obs.output))  # inline files make the first observation larger by design
         assert sum(len(v) for v in env._instance.files.values()) < 9000, t

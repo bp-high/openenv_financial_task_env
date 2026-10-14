@@ -16,19 +16,22 @@ from .families.base import grade
 from .models import DeskAction, DeskObservation
 from .sandbox import prepare_workspace, run_python
 
-MAX_STEPS = 12
+MAX_STEPS = 8
 MAX_READ = 6000
 # Unseeded resets in the same 10-minute window get the same instance, so the parallel episodes of one GRPO
 # group (separate sandboxes started together) compare answers to one problem.
 SEED_WINDOW_S = 600
+# v2: embed every file's contents in the first observation (like the top MetaHarness env) so a task can be
+# answered in one step with no reading turns. The python tool stays available for heavy arithmetic.
+INLINE_FILES = True
+MAX_INLINE = 6000  # per-file cap when inlining (keeps the observation inside the context budget)
 
 TOOLS_HELP = (
-    'Tools (reply with one JSON object {"tool": ..., "args": {...}} per turn): '
-    'list {} -> file names and sizes; read {"path": name} or {"paths": [names]} -> file contents; '
-    'python {"code": "..."} -> runs Python 3 in the workspace directory (files are in the current directory; '
-    "numpy and pandas available; print what you need; 10 s limit); "
-    'submit {"answer": {...}} -> grades your answer once and ends the episode (reward 1 if every key is right, '
-    f"else 0). You have {MAX_STEPS} tool calls; submit before they run out."
+    'Reply with ONE JSON object. To answer: {"tool": "submit", "args": {"answer": {...the documented keys...}}} '
+    "— graded once, all-or-nothing (reward 1 only if every field is exactly right, else 0). "
+    'If you need to compute, first call {"tool": "python", "args": {"code": "..."}} (the files are in the current '
+    "directory; numpy and pandas available; print what you need; 10 s limit). You may reason first, but your reply "
+    f"must end with exactly one JSON object and nothing after it. You have {MAX_STEPS} replies."
 )
 
 
@@ -60,8 +63,16 @@ class FinanceDeskEnvironment(Environment):
         prepare_workspace(self._workspace)
         self._state = State(episode_id=episode_id or str(uuid4()), step_count=0)
         self._done = False
-        listing = ", ".join(f"{n} ({len(t)} chars)" for n, t in sorted(self._instance.files.items()))
-        brief = f"Task [{family.title}]: {self._instance.prompt}\nWorkspace files: {listing}\n{TOOLS_HELP}"
+        if INLINE_FILES:
+            blocks = []
+            for n, t in sorted(self._instance.files.items()):
+                body = t if len(t) <= MAX_INLINE else t[:MAX_INLINE] + f"\n[truncated; read {n} with python for the rest]"
+                blocks.append(f"=== {n} ===\n{body}")
+            files_section = "FILES (full contents):\n" + "\n".join(blocks)
+        else:
+            files_section = "Workspace files: " + ", ".join(
+                f"{n} ({len(t)} chars)" for n, t in sorted(self._instance.files.items()))
+        brief = f"Task [{family.title}]: {self._instance.prompt}\n\n{files_section}\n\n{TOOLS_HELP}"
         return DeskObservation(output=brief, steps_left=MAX_STEPS, done=False, reward=0.0)
 
     def step(self, action: DeskAction, timeout_s: Optional[float] = None, **kwargs: Any) -> DeskObservation:  # type: ignore[override]

@@ -38,8 +38,8 @@ jobs:
           push: true
           provenance: false
           tags: |
-            ghcr.io/${{ github.repository_owner }}/finance-desk:v1
+            ghcr.io/${{ github.repository_owner }}/finance-desk:v2
             ghcr.io/${{ github.repository_owner }}/finance-desk:${{ github.sha }}
 
       - name: Print digest
-        run: echo "Pushed ghcr.io/${{ github.repository_owner }}/finance-desk:v1"
+        run: echo "Pushed ghcr.io/${{ github.repository_owner }}/finance-desk:v2"

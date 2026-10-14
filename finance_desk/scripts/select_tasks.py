@@ -48,10 +48,15 @@ for name, lv in chosen:
     tasks.append({
         "task_id": f"{name}-l{lv}",
         "split": "train",
+        # v2: tighter rollout/verifier so the trainer's "does another step fit" estimate packs ~2x more
+        # optimizer steps into the 4h budget; episodes are single-step/short so this is comfortable.
         "reset_wall_s": 120,
-        "rollout_wall_s": 900,
-        "verifier_wall_s": 30,
+        "rollout_wall_s": 300,
+        "verifier_wall_s": 15,
         "tool_wall_s": 120,
+        # inline files + optional reasoning; raise context so the first observation + reply always fit.
+        "completion_tokens": 8192,
+        "context_tokens": 16384,
     })
 
 summary = collections.Counter(FAMILIES[name].domain for name, lv in chosen)

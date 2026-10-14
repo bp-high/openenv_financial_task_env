@@ -13,8 +13,8 @@ schema = json.load(open(sys.argv[2] if len(sys.argv) > 2 else "schema.json"))
 tasks = json.load(open(sys.argv[3] if len(sys.argv) > 3 else "tasks.json"))
 
 submission = {
-    "submission_id": "finance-desk-v1",
-    "name": "Finance Desk: procedural multi-domain environment",
+    "submission_id": "finance-desk-v2",
+    "name": "Finance Desk v2: single-step inline-files multi-domain environment",
     "image": image,
     "schema": {"action": schema["action"], "observation": schema["observation"]},
     "tasks": tasks,
