@@ -1,0 +1,32 @@
+# Finance Desk v3 (terminal mode, tbench2_env contract). linux/amd64 only (the arena pins the amd64 image).
+FROM python:3.12-slim
+
+LABEL org.opencontainers.image.title="Finance Desk v3"
+LABEL org.opencontainers.image.description="Terminal-mode OpenEnv environment: software repair + finance tasks on the tbench2_env contract"
+LABEL org.opencontainers.image.source="https://github.com/bp-high/openenv_financial_task_env"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+
+# git is needed to install OpenEnv from its pinned commit; removed afterwards to keep the image small.
+# pytest/numpy/pandas/openpyxl are for the agent's own commands in the workdir.
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+    && pip install --no-cache-dir \
+        "openenv @ git+https://github.com/meta-pytorch/OpenEnv.git@86a180ede21e044f7929b9a7783ad83aa67d83a3" \
+        "fastapi>=0.104.0" "uvicorn>=0.24.0" "pydantic>=2.0.0" "websockets>=12.0" \
+        "numpy>=1.26.0" "pandas>=2.0.0" "openpyxl>=3.1" "pytest>=8.0" \
+    && apt-get purge -y git && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+# Server code lives in /opt/fdesk, readable by root only: the agent's commands run as `nobody` when the
+# sandbox allows switching users, so they cannot read the generators. /app is the task workdir.
+COPY fdesk /opt/fdesk/fdesk
+RUN chmod -R go-rwx /opt/fdesk && mkdir -p /app && chmod 755 /app
+
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/opt/fdesk FDESK_WORKDIR=/app \
+    OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+WORKDIR /app
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+
+CMD ["uvicorn", "fdesk.server.app_v3:app", "--app-dir", "/opt/fdesk", "--host", "0.0.0.0", "--port", "8000", \
+     "--ws-ping-interval", "60", "--ws-ping-timeout", "60"]

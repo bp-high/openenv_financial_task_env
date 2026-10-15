@@ -1,6 +1,7 @@
 name: build-finance-desk
 
-# Builds the Finance Desk linux/amd64 image and pushes it to GHCR. The workflow's own GITHUB_TOKEN
+# Builds the Finance Desk v3 (terminal mode) linux/amd64 image and pushes it to GHCR. v2 stays published at
+# :v2 (pinned by digest in its submission) and is no longer rebuilt. The workflow's own GITHUB_TOKEN
 # has packages:write, so no personal token is needed. After the first run, make the GHCR package public:
 # GitHub -> Packages -> finance-desk -> Package settings -> Change visibility -> Public.
 
@@ -33,13 +34,13 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./finance_desk
-          file: ./finance_desk/Dockerfile
+          file: ./finance_desk/Dockerfile.v3
           platforms: linux/amd64
           push: true
           provenance: false
           tags: |
-            ghcr.io/${{ github.repository_owner }}/finance-desk:v2
-            ghcr.io/${{ github.repository_owner }}/finance-desk:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/finance-desk:v3
+            ghcr.io/${{ github.repository_owner }}/finance-desk:v3-${{ github.sha }}
 
       - name: Print digest
-        run: echo "Pushed ghcr.io/${{ github.repository_owner }}/finance-desk:v2"
+        run: echo "Pushed ghcr.io/${{ github.repository_owner }}/finance-desk:v3"

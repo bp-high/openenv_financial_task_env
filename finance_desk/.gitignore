@@ -3,3 +3,4 @@ Dockerfile.localtest
 __pycache__/
 *.pyc
 .pytest_cache/
+Dockerfile.v3.localtest
