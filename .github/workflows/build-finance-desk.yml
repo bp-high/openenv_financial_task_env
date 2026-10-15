@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     branches: [dev/pensive-lovelace-bt5rsn]
-    paths: ["finance_desk/**", ".github/workflows/build-finance-desk.yml"]
+    paths: ["finance_desk/fdesk/**", "finance_desk/Dockerfile.v3", ".github/workflows/build-finance-desk.yml"]
 
 jobs:
   build:
