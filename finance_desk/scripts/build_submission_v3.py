@@ -1,6 +1,6 @@
 """Assemble submission_v3.json for the Arena (terminal mode).
 
-Usage: python scripts/build_submission_v3.py <image_ref> <schema.json> <task_ids_file>
+Usage: python scripts/build_submission_v3.py <image_ref> <schema.json> <task_ids_file> [submission_id] [out.json]
 Per-task budgets copy the operator's own Terminal-Bench 2 smoke test (benchflow/openenv-smoke-fix-git): 4096
 completion / 8192 context tokens, 32 tool calls, 60/min with a burst of 4. Training under the same budgets as the
 private tasks is the point of v3 (docs/STRATEGY_v3.md). example_actions / finish_action is a bare `evaluate`
@@ -11,6 +11,8 @@ import json
 import sys
 
 image, schema_path, ids_path = sys.argv[1:4]
+sub_id = sys.argv[4] if len(sys.argv) > 4 else "finance-desk-v3"
+out = sys.argv[5] if len(sys.argv) > 5 else "submission_v3.json"
 schema = json.load(open(schema_path))
 ids = [t.strip() for t in open(ids_path).read().replace(",", "\n").split("\n") if t.strip()]
 assert 1 <= len(ids) <= 50 and len(set(ids)) == len(ids), len(ids)
@@ -31,7 +33,7 @@ tasks = [{
 } for t in ids]
 
 submission = {
-    "submission_id": "finance-desk-v3",
+    "submission_id": sub_id,
     "name": "Finance Desk v3: terminal-mode software repair + finance (tbench2_env contract)",
     "image": image,
     "schema": {"action": schema["action"], "observation": schema["observation"]},
@@ -41,5 +43,5 @@ submission = {
     "dataset": "bpHigh/finance-desk",
     "source": "https://github.com/bp-high/openenv_financial_task_env/tree/dev/pensive-lovelace-bt5rsn/finance_desk",
 }
-json.dump(submission, open("submission_v3.json", "w"), indent=2)
-print(f"wrote submission_v3.json: {len(tasks)} tasks, image {image}")
+json.dump(submission, open(out, "w"), indent=2)
+print(f"wrote {out} ({sub_id}): {len(tasks)} tasks, image {image}")

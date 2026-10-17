@@ -75,3 +75,9 @@ reachable private point), then finance families for variety. Saturated (8/8) and
 | `real_growth-l3` | 2/4 | 4/4 | 0.75 |  |
 
 Selected 19 ids: 11 software, 8 finance.
+
+## v3b (42 ids)
+
+v3's run failed on the trainer side (TRAINER_REPORTED_FAILURE at step 116, no evaluation). v3b resubmits the same
+image with every id whose pooled solve rate is 0.12-0.80: the 19 above plus 23 more (`tasks_v3b.txt`): 12 software,
+30 finance. Left out: 7 saturated ids (8/8), 3 dead (0/8) and 5 near-saturated (0.88).

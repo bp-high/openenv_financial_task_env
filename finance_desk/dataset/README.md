@@ -34,20 +34,21 @@ Public task preview and source for the **Finance Desk** OpenEnv Arena environmen
 
 Each episode builds a fresh workdir (`/app`) holding a small repo or a set of data files, and gives a prose instruction.
 
-- **Software (11 task ids):**
+- **Software (12 task ids):**
   - fix seeded bugs in a stats, money or dates module (a failing visible test, a bug report, or both);
   - implement a log summarizer to a docstring spec;
   - repair a report script and regenerate its output.
 
   Hidden tests run against the agent's code. At generation time the shipped code is proven to fail them and the
   reference to pass.
-- **Finance (8 task ids):** procedural finance problems (bank reconciliation, bond pricing, cap table, covenants, FX
-  consolidation, payroll, PE waterfall, portfolio return). The answer goes into `answer.json` and is graded field by
+- **Finance (30 task ids):** procedural finance problems across 13 families (AR aging, bank reconciliation, bond
+  pricing, cap table, covenants, DCF/NPV, depreciation, FX consolidation, loan amortization, payroll, PE waterfall,
+  portfolio return, real growth). The answer goes into `answer.json` and is graded field by
   field.
 
 Reward is all-or-nothing: `1.0` if the hidden tests or every answer field pass, else `0.0`.
 
-Every task id was calibrated on live Qwen3.8-27B with an arena-style loop. Only mixed-outcome ids are submitted. The
+Every task id was calibrated on live Qwen3.8-27B with an arena-style loop. Only mixed-outcome ids are submitted (v3b: 42 of 57; v3: 19). The
 per-id table is in `calibration_v3.md`, and why terminal mode is explained in `STRATEGY_v3.md` (both in this dataset).
 
 `tasks.jsonl` has three illustrative instances per submitted task id: `instruction`, the workdir `files`, the
